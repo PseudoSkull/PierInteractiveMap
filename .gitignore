@@ -1,0 +1,79 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# macOS directory attributes
+Desktop.ini
+Thumbs.db
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# Node.js and Vite
+node_modules/
+*.log
+*.tsbuildinfo
+*.npm
+dist/
+build/
+coverage/
+*.cache
+
+# React
+*.js.map
+*.jsx.map
+*.css.map
+
+# Flask
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+instance/
+.env
+.env.*
+.venv/
+venv/
+ENV/
+venv.bak/
+
+# SQL Database
+*.sql
+*.sqlite
+*.db
+
+# Elasticsearch
+elasticsearch/
+*.es/
+*.elasticsearch/
+
+# Environment Variables
+.env
+.env.*
+*.env
+
+# Log files
+*.log
+
+# OS-specific files
+*.swp
+*.swo
+*~
+
+# IDE-specific files
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# Dependency directories
+node_modules/
+.bower_components/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
