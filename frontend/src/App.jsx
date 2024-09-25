@@ -1,13 +1,121 @@
-import { useState } from 'react'
-import reactLogo from '/map_for_inkscape.svg'
-import './App.css'
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import BoatList from './components/BoatList';
+import BoatForm from './components/BoatForm';
+import AreYouSure from './components/AreYouSure';
+import './App.css';
 
 function App() {
+  const [boats, setBoats] = useState([]); // Initialize as an empty array
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [selectedBoat, setSelectedBoat] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [deleteBoatId, setDeleteBoatId] = useState(null);
+
+  useEffect(() => {
+    fetchBoats(currentPage);
+  }, [currentPage]);
+
+  const fetchBoats = (page) => {
+    axios.get(`/boats?page=${page}`)
+      .then(response => {
+        setBoats(response.data.boats || []); // Ensure response.data.boats is an array
+        setTotalPages(response.data.pages || 1); // Set default value if undefined
+      })
+      .catch(error => console.error('Error fetching boats:', error));
+  };
+
+  const handleDelete = (id) => {
+    axios.delete(`/boats/${id}`)
+      .then(() => {
+        setBoats(boats.filter(boat => boat.id !== id));
+        setShowConfirmation(false);
+      })
+      .catch(error => console.error('Error deleting boat:', error));
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const openForm = (boat = null) => {
+    setSelectedBoat(boat);
+    setShowForm(true);
+  };
+
+  const closeForm = () => {
+    setSelectedBoat(null);
+    setShowForm(false);
+  };
+
+  const confirmDelete = (id) => {
+    setDeleteBoatId(id);
+    setShowConfirmation(true);
+  };
+
+  const handleSave = (boat) => {
+    if (boat.id) {
+      // Update existing boat
+      axios.put(`/boats/${boat.id}`, boat)
+        .then(() => {
+          fetchBoats(currentPage);
+          closeForm();
+        })
+        .catch(error => console.error('Error updating boat:', error));
+    } else {
+      // Create new boat
+      axios.post('/boats', boat)
+        .then(() => {
+          fetchBoats(currentPage);
+          closeForm();
+        })
+        .catch(error => console.error('Error creating boat:', error));
+    }
+  };
+
   return (
-    <>
-      <img src={reactLogo} alt="Map of the marina" />
-    </>
-  )
+    <div className="container">
+      <div className="map-section">
+        <img src="/map_for_inkscape.svg" alt="Map of the marina" />
+      </div>
+      <div className="listing-section">
+        <h2>Boat Listings</h2>
+        <button onClick={() => openForm()}>+ Add Boat</button>
+        <BoatList 
+          boats={boats}
+          onEdit={openForm}
+          onDelete={confirmDelete}
+        />
+        <div className="pagination">
+          {[...Array(totalPages)].map((_, index) => (
+            <button
+              key={index}
+              onClick={() => handlePageChange(index + 1)}
+              disabled={index + 1 === currentPage}
+            >
+              {index + 1}
+            </button>
+          ))}
+        </div>
+      </div>
+      {showForm && 
+        <BoatForm 
+          boat={selectedBoat}
+          onSave={handleSave}
+          onClose={closeForm}
+        />
+      }
+      {showConfirmation &&
+        <AreYouSure
+          message="Are you sure you want to delete this boat?"
+          onYes={() => handleDelete(deleteBoatId)}
+          onNo={() => setShowConfirmation(false)}
+        />
+      }
+    </div>
+  );
 }
 
-export default App
+export default App;
