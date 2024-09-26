@@ -79,3 +79,4 @@ yarn.lock
 
 # backend config
 backend/config/
+backend/scripts/sample_data/
