@@ -1,7 +1,17 @@
 from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
+from flask_cors import CORS # NEEDS TO BE REMOVED FOR SECURITY REASONS IN DEPLOYMENT (probably)
+from config.config import WEB_HOST_OF_APP, PORT_OF_MAP_FRONTEND
+import logging
+
+ALLOWED_CORS_ORIGINS = [
+    f"http://{WEB_HOST_OF_APP}:{PORT_OF_MAP_FRONTEND}",
+]
 
 app = Flask(__name__)
+cors = CORS(app, resources={r"/*": 
+    {"origins": ALLOWED_CORS_ORIGINS}},
+            supports_credentials=True) # NEEDS TO BE REMOVED FOR SECURITY REASONS IN DEPLOYMENT (probably)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -26,7 +36,7 @@ with app.app_context():
 @app.route('/boats', methods=['GET'])
 def get_boats():
     page = request.args.get('page', 1, type=int)
-    per_page = 10
+    per_page = request.args.get('per_page', 10, type=int) # Include per_page parameter
     boats = Boat.query.paginate(page=page, per_page=per_page)
     return jsonify({
         "boats": [boat_to_dict(boat) for boat in boats.items],
@@ -84,4 +94,6 @@ def boat_to_dict(boat):
     }
 
 if __name__ == "__main__":
+    # Set the logging level
+    logging.basicConfig(level=logging.DEBUG)
     app.run(debug=True)

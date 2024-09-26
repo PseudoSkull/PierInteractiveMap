@@ -14,12 +14,14 @@ function App() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [deleteBoatId, setDeleteBoatId] = useState(null);
 
+  const API_URL = 'http://localhost:5000/boats'; // Base URL for the API
+
   useEffect(() => {
     fetchBoats(currentPage);
   }, [currentPage]);
 
   const fetchBoats = (page) => {
-    axios.get(`/boats?page=${page}`)
+    axios.get(`${API_URL}?page=${page}&per_page=10`) // Include the per_page parameter
       .then(response => {
         setBoats(response.data.boats || []); // Ensure response.data.boats is an array
         setTotalPages(response.data.pages || 1); // Set default value if undefined
@@ -28,7 +30,7 @@ function App() {
   };
 
   const handleDelete = (id) => {
-    axios.delete(`/boats/${id}`)
+    axios.delete(`${API_URL}/${id}`)
       .then(() => {
         setBoats(boats.filter(boat => boat.id !== id));
         setShowConfirmation(false);
@@ -58,7 +60,7 @@ function App() {
   const handleSave = (boat) => {
     if (boat.id) {
       // Update existing boat
-      axios.put(`/boats/${boat.id}`, boat)
+      axios.put(`${API_URL}/${boat.id}`, boat)
         .then(() => {
           fetchBoats(currentPage);
           closeForm();
@@ -66,7 +68,7 @@ function App() {
         .catch(error => console.error('Error updating boat:', error));
     } else {
       // Create new boat
-      axios.post('/boats', boat)
+      axios.post(API_URL, boat)
         .then(() => {
           fetchBoats(currentPage);
           closeForm();
