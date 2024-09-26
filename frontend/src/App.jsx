@@ -3,10 +3,12 @@ import axios from 'axios';
 import BoatList from './components/BoatList';
 import BoatForm from './components/BoatForm';
 import AreYouSure from './components/AreYouSure';
+import Header from './components/Header'; // Import Header component
 import './App.css';
 
 function App() {
   const [boats, setBoats] = useState([]); // Initialize as an empty array
+  const [filteredBoats, setFilteredBoats] = useState([]); // For search results
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedBoat, setSelectedBoat] = useState(null);
@@ -23,7 +25,9 @@ function App() {
   const fetchBoats = (page) => {
     axios.get(`${API_URL}?page=${page}&per_page=10`) // Include the per_page parameter
       .then(response => {
-        setBoats(response.data.boats || []); // Ensure response.data.boats is an array
+        const boatData = response.data.boats || [];
+        setBoats(boatData);
+        setFilteredBoats(boatData); // Set filtered boats to the same initially
         setTotalPages(response.data.pages || 1); // Set default value if undefined
       })
       .catch(error => console.error('Error fetching boats:', error));
@@ -32,7 +36,9 @@ function App() {
   const handleDelete = (id) => {
     axios.delete(`${API_URL}/${id}`)
       .then(() => {
-        setBoats(boats.filter(boat => boat.id !== id));
+        const updatedBoats = boats.filter(boat => boat.id !== id);
+        setBoats(updatedBoats);
+        setFilteredBoats(updatedBoats); // Update filtered list as well
         setShowConfirmation(false);
       })
       .catch(error => console.error('Error deleting boat:', error));
@@ -81,24 +87,49 @@ function App() {
     }
   };
 
+  // Search Function
+  const handleSearch = (term) => {
+    if (!term) return;
+    
+    const lowerTerm = term.toLowerCase();
+    const filtered = boats.filter(boat => {
+      return (
+        (boat.index && boat.index.toString().includes(term)) ||
+        (boat.name && boat.name.toLowerCase().includes(lowerTerm)) ||
+        (boat.customer_name && boat.customer_name.toLowerCase().includes(lowerTerm)) ||
+        (boat.size && boat.size.toString().includes(term)) ||
+        (boat.make_model && boat.make_model.toLowerCase().includes(lowerTerm))
+      );
+    });
+    setFilteredBoats(filtered);
+  };
+
+  // Clear Search
+  const handleClearSearch = () => {
+    setFilteredBoats(boats); // Reset to all boats
+  };
+
   return (
-    <div className="container">
-      <div className="map-section">
-        <img src="/map_for_inkscape.svg" alt="Map of the marina" />
-      </div>
-      <div className="listing-section">
-        <h2>Boat Listings</h2>
-        <button onClick={() => openForm()}>+ Add Boat</button>
-        <div className="pagination">
-          <button onClick={() => handlePageChange('prev')} disabled={currentPage === 1}>{'<-'}</button>
-          <span style={{ margin: '0 10px' }}>You're on page {currentPage}</span>
-          <button onClick={() => handlePageChange('next')} disabled={currentPage === totalPages}>{'->'}</button>
+    <div>
+      <Header onSearch={handleSearch} onClear={handleClearSearch} /> {/* Header is now outside the container */}
+      <div className="container">
+        <div className="map-section">
+          <img src="/map_for_inkscape.svg" alt="Map of the marina" />
         </div>
-        <BoatList 
-          boats={boats}
-          onEdit={openForm}
-          onDelete={confirmDelete}
-        />
+        <div className="listing-section">
+          <h2>Boat Listings</h2>
+          <button onClick={() => openForm()}>+ Add Boat</button>
+          <div className="pagination">
+            <button onClick={() => handlePageChange('prev')} disabled={currentPage === 1}>{'<-'}</button>
+            <span style={{ margin: '0 10px' }}>You're on page {currentPage}</span>
+            <button onClick={() => handlePageChange('next')} disabled={currentPage === totalPages}>{'->'}</button>
+          </div>
+          <BoatList 
+            boats={filteredBoats} // Use filtered boats for the list
+            onEdit={openForm}
+            onDelete={confirmDelete}
+          />
+        </div>
       </div>
       {showForm && 
         <BoatForm 

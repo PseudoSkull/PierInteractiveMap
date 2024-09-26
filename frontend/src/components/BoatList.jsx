@@ -15,9 +15,11 @@ function BoatList({ boats = [], onEdit, onDelete }) {
                 ? `#${boat.index} ${boat.name} - ${boat.make_model} (${boat.size} ft)` 
                 : `#${boat.index} ${boat.make_model} (${boat.size} ft)`}
             </strong>
+            <br />
+            Customer: {boat.customer_name}
           </div>
           <div style={{ flex: '1 1 30%', textAlign: 'right' }}>
-            <button onClick={() => onEdit(boat)} style={{ marginRight: '10px' }}>Edit</button>
+            <button onClick={() => onEdit(boat)} style={{ marginRight: '10px' }}>View</button>
             <button onClick={() => onDelete(boat.id)}>Delete</button>
           </div>
         </li>

@@ -5,6 +5,18 @@ body, html {
   overflow-y: auto; /* Allow vertical scrolling */
 }
 
+.header {
+  background-color: #d3d3d3;
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
 .container {
   display: flex;
   flex-wrap: nowrap; /* Prevent wrapping */
