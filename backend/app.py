@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
-from flask_cors import CORS # NEEDS TO BE REMOVED FOR SECURITY REASONS IN DEPLOYMENT (probably)
+from flask_cors import CORS  # Enable CORS for development; remember to configure or remove in production
 from config.config import WEB_HOST_OF_APP, PORT_OF_MAP_FRONTEND
 import logging
 
@@ -11,12 +11,13 @@ ALLOWED_CORS_ORIGINS = [
 app = Flask(__name__)
 cors = CORS(app, resources={r"/*": 
     {"origins": ALLOWED_CORS_ORIGINS}},
-            supports_credentials=True) # NEEDS TO BE REMOVED FOR SECURITY REASONS IN DEPLOYMENT (probably)
+            supports_credentials=True)  # For CORS, needed only in development
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
+# Updated Boat model to include new fields
 class Boat(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     size = db.Column(db.String(50))
@@ -26,6 +27,8 @@ class Boat(db.Model):
     index = db.Column(db.Integer, unique=True)
     section = db.Column(db.String(1))
     mapped = db.Column(db.Boolean, default=False)
+    customer_name = db.Column(db.String(100))  # New field
+    vehicle_type = db.Column(db.String(50))  # New field
 
 # Create the database within the application context
 with app.app_context():
@@ -36,7 +39,7 @@ with app.app_context():
 @app.route('/boats', methods=['GET'])
 def get_boats():
     page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 10, type=int) # Include per_page parameter
+    per_page = request.args.get('per_page', 10, type=int)  # Include per_page parameter
     boats = Boat.query.paginate(page=page, per_page=per_page)
     return jsonify({
         "boats": [boat_to_dict(boat) for boat in boats.items],
@@ -55,7 +58,9 @@ def create_boat():
         notes=data['notes'],
         index=data['index'],
         section=data['section'],
-        mapped=False  # Default to unmapped
+        mapped=False,  # Default to unmapped
+        customer_name=data.get('customer_name'),  # Add new field
+        vehicle_type=data.get('vehicle_type')  # Add new field
     )
     db.session.add(new_boat)
     db.session.commit()
@@ -71,6 +76,8 @@ def update_boat(boat_id):
     boat.notes = data['notes']
     boat.index = data['index']
     boat.section = data['section']
+    boat.customer_name = data.get('customer_name')  # Update new field
+    boat.vehicle_type = data.get('vehicle_type')  # Update new field
     db.session.commit()
     return jsonify(boat_to_dict(boat))
 
@@ -81,6 +88,7 @@ def delete_boat(boat_id):
     db.session.commit()
     return jsonify({"message": "Boat deleted successfully"})
 
+# Update the boat_to_dict function to include the new fields
 def boat_to_dict(boat):
     return {
         "id": boat.id,
@@ -90,7 +98,9 @@ def boat_to_dict(boat):
         "notes": boat.notes,
         "index": boat.index,
         "section": boat.section,
-        "mapped": boat.mapped
+        "mapped": boat.mapped,
+        "customer_name": boat.customer_name,  # Include new field
+        "vehicle_type": boat.vehicle_type  # Include new field
     }
 
 if __name__ == "__main__":

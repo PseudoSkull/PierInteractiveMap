@@ -7,7 +7,9 @@ function BoatForm({ boat, onSave, onClose }) {
     make_model: '',
     notes: '',
     index: '',
-    section: ''
+    section: '',
+    customer_name: '',  // New field
+    vehicle_type: ''    // New field
   });
 
   useEffect(() => {
@@ -31,12 +33,20 @@ function BoatForm({ boat, onSave, onClose }) {
       <form onSubmit={handleSubmit} className="boat-form">
         <h3>{boat ? 'Edit Boat' : 'Add Boat'}</h3>
         <div>
+          <label>Customer Name:</label>
+          <input type="text" name="customer_name" value={formData.customer_name} onChange={handleChange} required />
+        </div>
+        <div>
+          <label>Vehicle Type:</label>
+          <input type="text" name="vehicle_type" value={formData.vehicle_type} onChange={handleChange} required />
+        </div>
+        <div>
           <label>Size:</label>
           <input type="text" name="size" value={formData.size} onChange={handleChange} required />
         </div>
         <div>
-          <label>Name:</label>
-          <input type="text" name="name" value={formData.name} onChange={handleChange} required />
+          <label>Boat Name:</label>
+          <input type="text" name="name" value={formData.name} onChange={handleChange} />
         </div>
         <div>
           <label>Make and Model:</label>

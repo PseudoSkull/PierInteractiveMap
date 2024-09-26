@@ -10,7 +10,11 @@ function BoatList({ boats = [], onEdit, onDelete }) {
       {boats.map(boat => (
         <li key={boat.id}>
           <div>
-            <strong>{boat.name}</strong> - {boat.size} ft
+            <strong>
+              {boat.name 
+                ? `${boat.name} - ${boat.make_model} (${boat.size} ft)` 
+                : `${boat.make_model} (${boat.size} ft)`}
+            </strong>
           </div>
           <div>
             <button onClick={() => onEdit(boat)}>Edit</button>
