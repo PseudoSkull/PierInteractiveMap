@@ -38,8 +38,12 @@ function App() {
       .catch(error => console.error('Error deleting boat:', error));
   };
 
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
+  const handlePageChange = (direction) => {
+    if (direction === 'next' && currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    } else if (direction === 'prev' && currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
   };
 
   const openForm = (boat = null) => {
@@ -85,22 +89,16 @@ function App() {
       <div className="listing-section">
         <h2>Boat Listings</h2>
         <button onClick={() => openForm()}>+ Add Boat</button>
+        <div className="pagination">
+          <button onClick={() => handlePageChange('prev')} disabled={currentPage === 1}>{'<-'}</button>
+          <span style={{ margin: '0 10px' }}>You're on page {currentPage}</span>
+          <button onClick={() => handlePageChange('next')} disabled={currentPage === totalPages}>{'->'}</button>
+        </div>
         <BoatList 
           boats={boats}
           onEdit={openForm}
           onDelete={confirmDelete}
         />
-        <div className="pagination">
-          {[...Array(totalPages)].map((_, index) => (
-            <button
-              key={index}
-              onClick={() => handlePageChange(index + 1)}
-              disabled={index + 1 === currentPage}
-            >
-              {index + 1}
-            </button>
-          ))}
-        </div>
       </div>
       {showForm && 
         <BoatForm 

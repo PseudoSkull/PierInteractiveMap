@@ -6,18 +6,18 @@ function BoatList({ boats = [], onEdit, onDelete }) {
   }
 
   return (
-    <ul>
+    <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
       {boats.map(boat => (
-        <li key={boat.id}>
-          <div>
+        <li key={boat.id} style={{ borderBottom: '1px solid #ccc', padding: '10px 0', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+          <div style={{ flex: '1 1 70%' }}>
             <strong>
               {boat.name 
-                ? `${boat.name} - ${boat.make_model} (${boat.size} ft)` 
-                : `${boat.make_model} (${boat.size} ft)`}
+                ? `#${boat.index} ${boat.name} - ${boat.make_model} (${boat.size} ft)` 
+                : `#${boat.index} ${boat.make_model} (${boat.size} ft)`}
             </strong>
           </div>
-          <div>
-            <button onClick={() => onEdit(boat)}>Edit</button>
+          <div style={{ flex: '1 1 30%', textAlign: 'right' }}>
+            <button onClick={() => onEdit(boat)} style={{ marginRight: '10px' }}>Edit</button>
             <button onClick={() => onDelete(boat.id)}>Delete</button>
           </div>
         </li>

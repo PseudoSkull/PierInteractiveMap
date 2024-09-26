@@ -20,7 +20,6 @@ def create_payload(row):
         "vehicle_type": row["Type"] if pd.notnull(row["Type"]) else None,
         "notes": row["Notes"] if pd.notnull(row["Notes"]) else None,
         "section": "",  # Add a default value for section if not present in your CSV
-        "mapped": False,
     }
 
 # Push Data to API
