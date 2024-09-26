@@ -38,14 +38,9 @@ with app.app_context():
 
 @app.route('/boats', methods=['GET'])
 def get_boats():
-    page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 10, type=int)  # Include per_page parameter
-    boats = Boat.query.paginate(page=page, per_page=per_page)
+    boats = Boat.query.all()
     return jsonify({
-        "boats": [boat_to_dict(boat) for boat in boats.items],
-        "total": boats.total,
-        "pages": boats.pages,
-        "current_page": boats.page
+        "boats": [boat_to_dict(boat) for boat in boats],
     })
 
 @app.route('/boats', methods=['POST'])

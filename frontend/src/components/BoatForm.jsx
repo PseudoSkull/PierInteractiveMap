@@ -34,15 +34,15 @@ function BoatForm({ boat, onSave, onClose }) {
         <h3>{boat ? 'Edit Boat' : 'Add Boat'}</h3>
         <div>
           <label>Customer Name:</label>
-          <input type="text" name="customer_name" value={formData.customer_name} onChange={handleChange} required />
+          <input type="text" name="customer_name" value={formData.customer_name} onChange={handleChange} />
         </div>
         <div>
           <label>Vehicle Type:</label>
-          <input type="text" name="vehicle_type" value={formData.vehicle_type} onChange={handleChange} required />
+          <input type="text" name="vehicle_type" value={formData.vehicle_type} onChange={handleChange} />
         </div>
         <div>
           <label>Size:</label>
-          <input type="text" name="size" value={formData.size} onChange={handleChange} required />
+          <input type="text" name="size" value={formData.size} onChange={handleChange} />
         </div>
         <div>
           <label>Boat Name:</label>
@@ -50,7 +50,7 @@ function BoatForm({ boat, onSave, onClose }) {
         </div>
         <div>
           <label>Make and Model:</label>
-          <input type="text" name="make_model" value={formData.make_model} onChange={handleChange} required />
+          <input type="text" name="make_model" value={formData.make_model} onChange={handleChange} />
         </div>
         <div>
           <label>Notes:</label>
@@ -58,11 +58,11 @@ function BoatForm({ boat, onSave, onClose }) {
         </div>
         <div>
           <label>Index:</label>
-          <input type="number" name="index" value={formData.index} onChange={handleChange} required />
+          <input type="number" name="index" value={formData.index} onChange={handleChange} />
         </div>
         <div>
           <label>Section:</label>
-          <input type="text" name="section" value={formData.section} onChange={handleChange} required />
+          <input type="text" name="section" value={formData.section} onChange={handleChange} />
         </div>
         <div className="form-buttons">
           <button type="submit">Save</button>

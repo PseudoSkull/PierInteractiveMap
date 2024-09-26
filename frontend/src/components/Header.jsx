@@ -16,7 +16,12 @@ function Header({ onSearch, onClear }) {
   };
 
   const handleSearch = () => {
-    onSearch(searchTerm);
+    // Check if the searchTerm is a number and contains no other characters
+    if (/^\d+$/.test(searchTerm.trim())) {
+      onSearch({ type: 'index', value: parseInt(searchTerm.trim(), 10) });
+    } else {
+      onSearch({ type: 'text', value: searchTerm.trim() });
+    }
   };
 
   const handleClear = () => {
@@ -37,7 +42,7 @@ function Header({ onSearch, onClear }) {
         type="text"
         value={searchTerm}
         onChange={handleSearchChange}
-        onKeyDown={handleKeyDown} // Add keydown event listener
+        onKeyDown={handleKeyDown}
         placeholder="Search by index, name, customer, size, or type"
         style={{ flex: 1, padding: '10px', marginRight: '10px' }}
       />
