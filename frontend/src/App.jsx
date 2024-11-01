@@ -4,7 +4,8 @@ import BoatList from './components/BoatList';
 import BoatForm from './components/BoatForm';
 import AreYouSure from './components/AreYouSure';
 import Header from './components/Header';
-import './App.css';
+import Map from './components/Map'; // Import the new Map component
+import './styles/App.css';
 
 function App() {
   const [boats, setBoats] = useState([]); // All boats fetched from the backend
@@ -142,11 +143,9 @@ function App() {
 
   return (
     <div>
-      <Header onSearch={handleSearch} onClear={handleClearSearch} /> {/* Header is now outside the container */}
+      <Header onSearch={handleSearch} onClear={handleClearSearch} />
       <div className="container">
-        <div className="map-section">
-          <img src="/map_for_inkscape.svg" alt="Map of the marina" />
-        </div>
+        <Map /> {/* Replace the image with the Map component */}
         <div className="listing-section">
           <h2>Boat Listings</h2>
           <button onClick={() => openForm()}>+ Add Boat</button>
@@ -157,27 +156,23 @@ function App() {
             </span>
             <button onClick={() => handlePageChange('next')} disabled={currentPage === totalPages}>{'->'}</button>
           </div>
-          <BoatList 
-            boats={currentBoats} // Show only the boats for the current page
+          <BoatList
+            boats={currentBoats}
             onEdit={openForm}
             onDelete={confirmDelete}
           />
         </div>
       </div>
-      {showForm && 
-        <BoatForm 
-          boat={selectedBoat}
-          onSave={handleSave}
-          onClose={closeForm}
-        />
-      }
-      {showConfirmation &&
+      {showForm && (
+        <BoatForm boat={selectedBoat} onSave={handleSave} onClose={closeForm} />
+      )}
+      {showConfirmation && (
         <AreYouSure
           message="Are you sure you want to delete this boat?"
           onYes={() => handleDelete(deleteBoatId)}
           onNo={() => setShowConfirmation(false)}
         />
-      }
+      )}
     </div>
   );
 }

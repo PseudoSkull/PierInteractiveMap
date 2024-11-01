@@ -1,0 +1,12 @@
+/* Map.css */
+.map-canvas {
+    border: 1px solid #ccc;
+  }
+  
+  .color-buttons button {
+    margin: 5px;
+    padding: 10px;
+    border: none;
+    cursor: pointer;
+  }
+  
