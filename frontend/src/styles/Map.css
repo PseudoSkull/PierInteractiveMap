@@ -1,8 +1,15 @@
 /* Map.css */
+
+.map-container {
+  width: 80%; /* Adjusts the display size */
+  height: auto;
+}
+
 .map-canvas {
-    border: 1px solid #ccc;
-  }
-  
+  width: 794px; /* Width in pixels */
+  height: 1123; /* Height in pixels */
+}
+
   .color-buttons button {
     margin: 5px;
     padding: 10px;
