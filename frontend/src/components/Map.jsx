@@ -15,9 +15,15 @@ function Map() {
   const [scalePosition, setScalePosition] = useState({ x: 750, y: 1070 }); // Bottom-right corner
   const [scaleDraggable, setScaleDraggable] = useState(true);
 
+  const mapWidth = 794;
+  const mapHeight = 1123;
+  const maxUp = 25;
+  const maxDown = mapHeight - 25;
+  const maxLeft = 75;
+  const maxRight = mapWidth - 230;
+
   useEffect(() => {
     const handleKeyDown = (e) => {
-
       if (activeShapeId === null) {
         console.log('No active shape to control');
         return;
@@ -33,16 +39,16 @@ function Map() {
 
       switch (e.key) {
         case 'u': // Up
-          activeShape.y -= speed;
+          activeShape.y = Math.max(activeShape.y - speed, maxUp);
           break;
         case 'n': // Down
-          activeShape.y += speed;
+          activeShape.y = Math.min(activeShape.y + speed, maxDown);
           break;
         case 'h': // Left
-          activeShape.x -= speed;
+          activeShape.x = Math.max(activeShape.x - speed, maxLeft);
           break;
         case 'j': // Right
-          activeShape.x += speed;
+          activeShape.x = Math.min(activeShape.x + speed, maxRight);
           break;
         case '[': // Rotate counterclockwise
           activeShape.angle -= 5;
@@ -79,6 +85,7 @@ function Map() {
         default:
           break;
       }
+
       setShapes(newShapes);
     };
 
@@ -86,7 +93,7 @@ function Map() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [shapes, activeShapeId, speed]);
+  }, [shapes, activeShapeId, speed, mapWidth, mapHeight]);
 
   const handleShapeClick = (id) => {
     console.log('Shape clicked:', id);
@@ -100,16 +107,21 @@ function Map() {
 
   const handleDragEnd = (e, id) => {
     console.log('Drag ended on shape:', id);
+    const newX = Math.max(0, Math.min(e.target.x(), mapWidth));
+    const newY = Math.max(0, Math.min(e.target.y(), mapHeight));
+
     setIsDragging(false);
     const newShapes = shapes.map(shape =>
-      shape.id === id ? { ...shape, x: e.target.x(), y: e.target.y() } : shape
+      shape.id === id ? { ...shape, x: newX, y: newY } : shape
     );
     setShapes(newShapes);
   };
 
   const handleScaleDragEnd = (e) => {
-    console.log('Scale drag ended');
-    setScalePosition({ x: e.target.x(), y: e.target.y() });
+    const newX = Math.max(0, Math.min(e.target.x(), mapWidth));
+    const newY = Math.max(0, Math.min(e.target.y(), mapHeight));
+    console.log(`Scale drag ended at x ${newX} y ${newY}`);
+    setScalePosition({ x: newX, y: newY });
   };
 
   const addNewBoat = () => {
@@ -120,9 +132,9 @@ function Map() {
 
   return (
     <div>
-      <Stage width={794} height={1123} className="map-canvas">
+      <Stage width={mapWidth} height={mapHeight} className="map-canvas">
         <Layer>
-          <Image image={mapImage} width={794} height={1123} />
+          <Image image={mapImage} width={mapWidth} height={mapHeight} />
           {shapes.map(shape => (
             <Ellipse
               key={shape.id}
@@ -143,8 +155,8 @@ function Map() {
           {scaleImage && (
             <Image
               image={scaleImage}
-              x={scalePosition.x}
-              y={scalePosition.y}
+              x={437}
+              y={1094}
               draggable={scaleDraggable}
               onDragEnd={handleScaleDragEnd}
               scaleX={0.5} // Scale down the width to half
