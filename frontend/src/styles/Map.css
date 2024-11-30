@@ -1,19 +1,24 @@
 /* Map.css */
 
 .map-container {
-  width: 80%; /* Adjusts the display size */
-  height: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .map-canvas {
-  width: 794px; /* Width in pixels */
-  height: 1123; /* Height in pixels */
+  width: 794px; /* Fixed width for canvas */
+  height: 1123px; /* Fixed height for canvas */
+  border: 1px solid black; /* Optional: to visualize the canvas border */
 }
 
-  .color-buttons button {
-    margin: 5px;
-    padding: 10px;
-    border: none;
-    cursor: pointer;
-  }
-  
+.menu {
+  margin-top: 20px;
+}
+
+.color-buttons button {
+  margin: 5px;
+  padding: 10px;
+  border: none;
+  cursor: pointer;
+}
