@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Stage, Layer, Ellipse, Image } from 'react-konva';
 import useImage from 'use-image';
+import AreYouSure from './AreYouSure'; // Import AreYouSure component
 import './../styles/Map.css'; // Ensure you have basic styles
 
 function Map() {
@@ -8,6 +9,7 @@ function Map() {
   const [activeShapeId, setActiveShapeId] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [speed, setSpeed] = useState(5);
+  const [showConfirmation, setShowConfirmation] = useState(false);
   const colorOptions = ['blue', 'red', 'purple', 'pink', 'green'];
   const [colorIndex, setColorIndex] = useState(0);
   const [mapImage] = useImage('/map_for_inkscape.svg');
@@ -24,6 +26,12 @@ function Map() {
 
   useEffect(() => {
     const handleKeyDown = (e) => {
+      if (e.key === 'Backspace' && activeShapeId !== null) {
+        e.preventDefault(); // Prevent browser navigation
+        setShowConfirmation(true);
+        return;
+      }
+
       if (activeShapeId === null) {
         console.log('No active shape to control');
         return;
@@ -93,7 +101,7 @@ function Map() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [shapes, activeShapeId, speed, mapWidth, mapHeight]);
+  }, [shapes, activeShapeId, speed, mapWidth, mapHeight, colorOptions, colorIndex]);
 
   const handleShapeClick = (id) => {
     console.log('Shape clicked:', id);
@@ -128,6 +136,16 @@ function Map() {
     const newId = shapes.length ? Math.max(...shapes.map(shape => shape.id)) + 1 : 1;
     console.log('Adding new boat with ID:', newId);
     setShapes([...shapes, { id: newId, x: 200, y: 200, width: 100, height: 50, color: 'purple', angle: 0 }]);
+  };
+
+  const confirmDeletion = () => {
+    setShapes(shapes.filter(shape => shape.id !== activeShapeId));
+    setActiveShapeId(null);
+    setShowConfirmation(false);
+  };
+
+  const cancelDeletion = () => {
+    setShowConfirmation(false);
   };
 
   return (
@@ -177,6 +195,13 @@ function Map() {
         </label>
         <button onClick={addNewBoat}>Add Boat to Map</button>
       </div>
+      {showConfirmation && (
+        <AreYouSure
+          message="Are you sure you want to delete this boat?"
+          onYes={confirmDeletion}
+          onNo={cancelDeletion}
+        />
+      )}
     </div>
   );
 }
