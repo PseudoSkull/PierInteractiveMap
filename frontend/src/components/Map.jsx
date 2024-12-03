@@ -1,3 +1,5 @@
+// ./components/Map.jsx
+
 import React, { useState, useEffect } from 'react';
 import { Stage, Layer, Ellipse, Image } from 'react-konva';
 import useImage from 'use-image';
@@ -24,8 +26,18 @@ function Map() {
   const maxLeft = 75;
   const maxRight = mapWidth - 230;
 
+  const isEditingInput = () => {
+    const activeElement = document.activeElement;
+    return activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA');
+  };
+
   useEffect(() => {
     const handleKeyDown = (e) => {
+      if (isEditingInput()) {
+        // Ignore key presses when focused on input or textarea
+        return;
+      }
+
       if (e.key === 'Backspace' && activeShapeId !== null) {
         e.preventDefault(); // Prevent browser navigation
         setShowConfirmation(true);
