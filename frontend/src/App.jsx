@@ -1,3 +1,5 @@
+// ./App.jsx
+
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import BoatList from './components/BoatList';
@@ -24,37 +26,33 @@ function App() {
     fetchAllBoats();
   }, []);
 
-  // Fetch all boats from the backend and set pagination details
   const fetchAllBoats = () => {
     axios.get(API_URL)
       .then(response => {
         const boatData = response.data.boats || [];
         setBoats(boatData);
-        setFilteredBoats(boatData); // Initially display all boats
-        setTotalPages(Math.ceil(boatData.length / boatsPerPage)); // Calculate total pages
+        setFilteredBoats(boatData);
+        setTotalPages(Math.ceil(boatData.length / boatsPerPage));
       })
       .catch(error => console.error('Error fetching boats:', error));
   };
 
-  // Delete a boat by ID
   const handleDelete = (id) => {
     axios.delete(`${API_URL}/${id}`)
       .then(() => {
         const updatedBoats = boats.filter(boat => boat.id !== id);
         setBoats(updatedBoats);
-        setFilteredBoats(updatedBoats); // Update filtered list as well
+        setFilteredBoats(updatedBoats);
         setShowConfirmation(false);
-        updateTotalPages(updatedBoats); // Update total pages after deletion
+        updateTotalPages(updatedBoats);
       })
       .catch(error => console.error('Error deleting boat:', error));
   };
 
-  // Update total pages based on the filtered boat list
   const updateTotalPages = (filteredBoatsList) => {
     setTotalPages(Math.ceil(filteredBoatsList.length / boatsPerPage));
   };
 
-  // Handle pagination changes
   const handlePageChange = (direction) => {
     if (direction === 'next' && currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
@@ -63,54 +61,45 @@ function App() {
     }
   };
 
-  // Open the form modal for adding or editing a boat
   const openForm = (boat = null) => {
     setSelectedBoat(boat);
     setShowForm(true);
   };
 
-  // Close the form modal
   const closeForm = () => {
     setSelectedBoat(null);
     setShowForm(false);
   };
 
-  // Open the confirmation modal for deleting a boat
   const confirmDelete = (id) => {
     setDeleteBoatId(id);
     setShowConfirmation(true);
   };
 
-  // Handle saving a new or edited boat
   const handleSave = (boat) => {
     if (boat.id) {
-      // Update existing boat
       axios.put(`${API_URL}/${boat.id}`, boat)
         .then(() => {
-          fetchAllBoats(); // Re-fetch all boats to reflect changes
+          fetchAllBoats();
           closeForm();
         })
         .catch(error => console.error('Error updating boat:', error));
     } else {
-      // Create new boat
       axios.post(API_URL, boat)
         .then(() => {
-          fetchAllBoats(); // Re-fetch all boats to reflect changes
+          fetchAllBoats();
           closeForm();
         })
         .catch(error => console.error('Error creating boat:', error));
     }
   };
 
-  // Handle searching boats based on index or text
   const handleSearch = ({ type, value }) => {
     let filtered = boats;
 
     if (type === 'index') {
-      // If searching by index, filter by exact match
       filtered = boats.filter(boat => boat.index === parseInt(value));
     } else if (type === 'text') {
-      // If searching by text, search all fields
       const lowerTerm = value.toLowerCase();
       filtered = boats.filter(boat => {
         return (
@@ -124,35 +113,35 @@ function App() {
     }
 
     setFilteredBoats(filtered);
-    setCurrentPage(1); // Reset to the first page when a new search is applied
-    updateTotalPages(filtered); // Update total pages based on filtered results
+    setCurrentPage(1);
+    updateTotalPages(filtered);
   };
 
-  // Clear search results and show all boats
   const handleClearSearch = () => {
-    setFilteredBoats(boats); // Reset to all boats
-    setCurrentPage(1); // Reset to the first page
-    updateTotalPages(boats); // Update total pages to original state
+    setFilteredBoats(boats);
+    setCurrentPage(1);
+    updateTotalPages(boats);
   };
 
-  // Get current boats based on pagination
   const currentBoats = filteredBoats.slice(
     (currentPage - 1) * boatsPerPage,
     currentPage * boatsPerPage
   );
 
   return (
-    <div>
+    <div className="app">
       <Header onSearch={handleSearch} onClear={handleClearSearch} />
       <div className="container">
-        <Map /> {/* Replace the image with the Map component */}
+        <div className="map-section">
+          <Map />
+        </div>
         <div className="listing-section">
           <h2>Boat Listings</h2>
           <button onClick={() => openForm()}>+ Add Boat</button>
           <div className="pagination">
             <button onClick={() => handlePageChange('prev')} disabled={currentPage === 1}>{'<-'}</button>
-            <span style={{ margin: '0 10px' }}>
-              You're on page {currentPage} of {totalPages === 0 ? 1 : totalPages}
+            <span>
+              You're on page {currentPage} of {totalPages}
             </span>
             <button onClick={() => handlePageChange('next')} disabled={currentPage === totalPages}>{'->'}</button>
           </div>

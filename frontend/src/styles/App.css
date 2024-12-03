@@ -1,3 +1,5 @@
+/* ./styles/App.css */
+
 body, html {
   margin: 0;
   padding: 0;
@@ -12,8 +14,11 @@ body, html {
   justify-content: space-between;
   align-items: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  position: sticky;
+  position: fixed; /* Fix it to the top of the viewport */
   top: 0;
+  left: 0;
+  width: 100% !important; /* Force it to always take up the entire page width */
+  /* max-width: 100% !important; Ensure it doesn't get restricted by any parent */
   z-index: 1000;
 }
 
@@ -21,6 +26,24 @@ body, html {
   display: flex;
   flex-wrap: nowrap; /* Prevent wrapping */
   width: 100%;
+}
+
+.header-container {
+  display: flex;
+  align-items: center;
+  padding: 10px 20px;
+  background-color: #f8f9fa;
+}
+
+.header-input {
+  flex: 1;
+  padding: 10px;
+  margin-right: 10px;
+}
+
+.header-button {
+  padding: 10px 20px;
+  margin-right: 10px;
 }
 
 .map-section {

@@ -1,3 +1,5 @@
+// ./components/BoatList.jsx
+
 import React from 'react';
 
 function BoatList({ boats = [], onEdit, onDelete }) {

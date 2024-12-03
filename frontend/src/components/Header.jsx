@@ -1,3 +1,5 @@
+// ./components/Header.jsx
+
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch } from '@fortawesome/free-solid-svg-icons';
@@ -36,7 +38,7 @@ function Header({ onSearch, onClear }) {
   };
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', padding: '10px 20px', backgroundColor: '#f8f9fa' }}>
+    <div className="header-container">
       <FontAwesomeIcon icon={faSearch} style={{ marginRight: '10px' }} />
       <input
         type="text"
@@ -44,10 +46,10 @@ function Header({ onSearch, onClear }) {
         onChange={handleSearchChange}
         onKeyDown={handleKeyDown}
         placeholder="Search by index, name, customer, size, or type"
-        style={{ flex: 1, padding: '10px', marginRight: '10px' }}
+        className="header-input"
       />
-      <button onClick={handleSearch} style={{ padding: '10px 20px', marginRight: '10px' }}>Search</button>
-      <button onClick={handleClear} style={{ padding: '10px 20px' }}>Clear Search</button>
+      <button onClick={handleSearch} className="header-button">Search</button>
+      <button onClick={handleClear} className="header-button">Clear Search</button>
     </div>
   );
 }
