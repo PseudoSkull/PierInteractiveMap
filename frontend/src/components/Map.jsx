@@ -16,7 +16,7 @@ function Map() {
   const [colorIndex, setColorIndex] = useState(0);
   const [mapImage] = useImage('/map_for_inkscape.svg');
   const [scaleImage] = useImage('/scale.png');
-  const [scalePosition, setScalePosition] = useState({ x: 750, y: 1070 }); // Bottom-right corner
+  const [scalePosition, setScalePosition] = useState({ x: 450, y: 1094 }); // Bottom-right corner
   const [scaleDraggable, setScaleDraggable] = useState(true);
 
   const mapWidth = 794;
@@ -127,13 +127,26 @@ function Map() {
 
   const handleDragEnd = (e, id) => {
     console.log('Drag ended on shape:', id);
-    const newX = Math.max(0, Math.min(e.target.x(), mapWidth));
-    const newY = Math.max(0, Math.min(e.target.y(), mapHeight));
-
-    setIsDragging(false);
+  
+    // Get the new position of the dragged shape
+    const newX = e.target.x();
+    const newY = e.target.y();
+  
+    // Check if the shape is completely outside the boundaries
+    const isOutOfBounds =
+      newX < 0 || newY < 0 || newX > mapWidth || newY > mapHeight;
+  
+    // Update the shape's position
     const newShapes = shapes.map(shape =>
-      shape.id === id ? { ...shape, x: newX, y: newY } : shape
+      shape.id === id
+        ? {
+            ...shape,
+            x: isOutOfBounds ? scalePosition.x-200 : Math.max(0, Math.min(newX, mapWidth)),
+            y: isOutOfBounds ? scalePosition.y-200 : Math.max(0, Math.min(newY, mapHeight))
+          }
+        : shape
     );
+  
     setShapes(newShapes);
   };
 
@@ -147,7 +160,7 @@ function Map() {
   const addNewBoat = () => {
     const newId = shapes.length ? Math.max(...shapes.map(shape => shape.id)) + 1 : 1;
     console.log('Adding new boat with ID:', newId);
-    setShapes([...shapes, { id: newId, x: 200, y: 200, width: 100, height: 50, color: 'purple', angle: 0 }]);
+    setShapes([...shapes, { id: newId, x: 200, y: 200, width: 100, height: 50, color: 'purple', angle: 0, border: null, }]);
   };
 
   const confirmDeletion = () => {
@@ -160,6 +173,23 @@ function Map() {
     setShowConfirmation(false);
   };
 
+  const bringBoatToCenter = () => {
+    if (activeShapeId === null) {
+      console.log("No boat selected to bring back to center.");
+      return;
+    }
+  
+    // Update the position of the active shape to the center of the map
+    const newShapes = shapes.map(shape =>
+      shape.id === activeShapeId
+        ? { ...shape, x: mapWidth / 2, y: mapHeight / 2 }
+        : shape
+    );
+  
+    setShapes(newShapes);
+    console.log(`Boat with ID ${activeShapeId} brought back to center.`);
+  };
+  
   return (
     <div>
       <Stage width={mapWidth} height={mapHeight} className="map-canvas">
@@ -179,18 +209,18 @@ function Map() {
               onDragStart={() => handleDragStart(shape.id)}
               onDragEnd={(e) => handleDragEnd(e, shape.id)}
               stroke="black"
-              strokeWidth={2}
+              strokeWidth={1}
             />
           ))}
           {scaleImage && (
             <Image
               image={scaleImage}
-              x={437}
-              y={1094}
+              x={scalePosition.x}
+              y={scalePosition.y}
               draggable={scaleDraggable}
               onDragEnd={handleScaleDragEnd}
-              scaleX={0.5} // Scale down the width to half
-              scaleY={0.5} // Scale down the height to half
+              scaleX={0.5}
+              scaleY={0.5}
             />
           )}
         </Layer>
@@ -206,6 +236,7 @@ function Map() {
           />
         </label>
         <button onClick={addNewBoat}>Add Boat to Map</button>
+        <button onClick={bringBoatToCenter}>Bring Boat Back to Center</button>
       </div>
       {showConfirmation && (
         <AreYouSure
