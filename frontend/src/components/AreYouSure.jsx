@@ -1,3 +1,5 @@
+// ./components/AreYouSure.jsx
+
 import React from 'react';
 
 function AreYouSure({ message, onYes, onNo }) {
