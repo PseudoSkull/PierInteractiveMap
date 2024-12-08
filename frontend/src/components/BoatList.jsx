@@ -3,6 +3,16 @@
 import React from 'react';
 
 function BoatList({ boats = [], onEdit, onDelete }) {
+  const handleViewBoatOnMap = (boat) => {
+    const boatOnMapId = boat.boat_on_map_id;
+    if (!boatOnMapId) return;
+  
+    alert(`This is where the boat for ${boat.name} is`);
+    setShapes(shapes.map(shape =>
+      shape.id === boatOnMapId ? { ...shape, visible: true } : { ...shape, visible: false }
+    ));
+  };
+
   if (!boats || boats.length === 0) {
     return <p>No boats available. Add a new boat to get started!</p>;
   }
@@ -23,6 +33,9 @@ function BoatList({ boats = [], onEdit, onDelete }) {
           <div style={{ flex: '1 1 30%', textAlign: 'right' }}>
             <button onClick={() => onEdit(boat)} style={{ marginRight: '10px' }}>View</button>
             <button onClick={() => onDelete(boat.id)}>Delete</button>
+            <button onClick={() => handleViewBoatOnMap(boat)}>
+              {boat.boat_on_map_id ? "View Boat on Map" : "Unassigned"}
+            </button>
           </div>
         </li>
       ))}

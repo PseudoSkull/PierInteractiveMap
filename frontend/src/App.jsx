@@ -117,6 +117,15 @@ function App() {
     updateTotalPages(filtered);
   };
 
+  const clearAllBoatData = () => {
+    axios.delete('http://localhost:5000/boats-on-map/clear')
+      .then(() => {
+        setShapes([{ id: 1, x: 200, y: 200, width: 100, height: 50, color: 'purple', angle: 0 }]);
+      })
+      .catch(error => console.error('Error clearing boats:', error));
+  };
+  
+
   const handleClearSearch = () => {
     setFilteredBoats(boats);
     setCurrentPage(1);

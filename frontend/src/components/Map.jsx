@@ -3,11 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import { Stage, Layer, Ellipse, Image } from 'react-konva';
 import useImage from 'use-image';
+import axios from 'axios';
 import AreYouSure from './AreYouSure'; // Import AreYouSure component
 import './../styles/Map.css'; // Ensure you have basic styles
 
 function Map() {
-  const [shapes, setShapes] = useState([{ id: 1, x: 150, y: 100, width: 100, height: 50, color: 'purple', angle: 0 }]);
+  const [shapes, setShapes] = useState([]);
   const [activeShapeId, setActiveShapeId] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [speed, setSpeed] = useState(5);
@@ -16,180 +17,148 @@ function Map() {
   const [colorIndex, setColorIndex] = useState(0);
   const [mapImage] = useImage('/map_for_inkscape.svg');
   const [scaleImage] = useImage('/scale.png');
-  const [scalePosition, setScalePosition] = useState({ x: 450, y: 1094 }); // Bottom-right corner
+  const [scalePosition, setScalePosition] = useState({ x: 450, y: 1094 });
   const [scaleDraggable, setScaleDraggable] = useState(true);
 
   const mapWidth = 794;
   const mapHeight = 1123;
-  const maxUp = 25;
-  const maxDown = mapHeight - 25;
-  const maxLeft = 75;
-  const maxRight = mapWidth - 230;
 
-  const isEditingInput = () => {
-    const activeElement = document.activeElement;
-    return activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA');
+  useEffect(() => {
+    // Load boats on map from backend
+    axios.get('http://localhost:5000/boats-on-map')
+      .then(response => setShapes(response.data.boats_on_map))
+      .catch(error => console.error('Error loading boat-on-map data:', error));
+  }, []);
+
+  const saveBoatOnMap = (updatedShape) => {
+    axios.put(`http://localhost:5000/boats-on-map/${updatedShape.id}`, updatedShape)
+      .then(() => console.log('BoatOnMap updated successfully'))
+      .catch(error => console.error('Error saving boat-on-map data:', error));
+  };
+
+  const clearAllBoatData = () => {
+    axios.delete('http://localhost:5000/boats-on-map/clear')
+      .then(() => {
+        setShapes([{ id: 1, x: 200, y: 200, width: 100, height: 50, color: 'purple', angle: 0 }]);
+      })
+      .catch(error => console.error('Error clearing boats:', error));
+  };
+
+  const handleKeyDown = (e) => {
+    if (activeShapeId === null) return;
+
+    let newShapes = [...shapes];
+    const activeShape = newShapes.find(shape => shape.id === activeShapeId);
+
+    if (!activeShape) return;
+
+    switch (e.key) {
+      case 'u': // Up
+        activeShape.y = Math.max(activeShape.y - speed, 25);
+        break;
+      case 'n': // Down
+        activeShape.y = Math.min(activeShape.y + speed, mapHeight - 25);
+        break;
+      case 'h': // Left
+        activeShape.x = Math.max(activeShape.x - speed, 75);
+        break;
+      case 'j': // Right
+        activeShape.x = Math.min(activeShape.x + speed, mapWidth - 230);
+        break;
+      case '[': // Rotate counterclockwise
+        activeShape.angle -= 5;
+        break;
+      case ']': // Rotate clockwise
+        activeShape.angle += 5;
+        break;
+      case '=': // Increase size
+        activeShape.width += 5;
+        activeShape.height += 3.5;
+        break;
+      case '-': // Decrease size
+        if (activeShape.width > 1 && activeShape.height > 0.5) {
+          activeShape.width -= 5;
+          activeShape.height -= 3.5;
+        }
+        break;
+      case 'c': // Change color
+        setColorIndex((prevIndex) => (prevIndex + 1) % colorOptions.length);
+        activeShape.color = colorOptions[(colorIndex + 1) % colorOptions.length];
+        break;
+      default:
+        return;
+    }
+
+    setShapes(newShapes);
+    saveBoatOnMap(activeShape);
   };
 
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (isEditingInput()) {
-        // Ignore key presses when focused on input or textarea
-        return;
-      }
-
-      if (e.key === 'Backspace' && activeShapeId !== null) {
-        e.preventDefault(); // Prevent browser navigation
-        setShowConfirmation(true);
-        return;
-      }
-
-      if (activeShapeId === null) {
-        console.log('No active shape to control');
-        return;
-      }
-
-      let newShapes = [...shapes];
-      const activeShape = newShapes.find(shape => shape.id === activeShapeId);
-
-      if (!activeShape) {
-        console.log('Active shape not found');
-        return;
-      }
-
-      switch (e.key) {
-        case 'u': // Up
-          activeShape.y = Math.max(activeShape.y - speed, maxUp);
-          break;
-        case 'n': // Down
-          activeShape.y = Math.min(activeShape.y + speed, maxDown);
-          break;
-        case 'h': // Left
-          activeShape.x = Math.max(activeShape.x - speed, maxLeft);
-          break;
-        case 'j': // Right
-          activeShape.x = Math.min(activeShape.x + speed, maxRight);
-          break;
-        case '[': // Rotate counterclockwise
-          activeShape.angle -= 5;
-          break;
-        case ']': // Rotate clockwise
-          activeShape.angle += 5;
-          break;
-        case '=': // Increase size
-          activeShape.width += 5;
-          activeShape.height += 3.5;
-          break;
-        case '-': // Decrease size
-          if (activeShape.width > 1 && activeShape.height > 0.5) {
-            activeShape.width -= 5;
-            activeShape.height -= 3.5;
-          }
-          break;
-        case 'c': // Change color
-          setColorIndex((prevIndex) => (prevIndex + 1) % colorOptions.length);
-          activeShape.color = colorOptions[(colorIndex + 1) % colorOptions.length];
-          break;
-        case 'w': // Increase width
-          activeShape.width += 5;
-          break;
-        case 'e': // Increase height
-          activeShape.height += 5;
-          break;
-        case 's': // Decrease width
-          if (activeShape.width > 5) activeShape.width -= 5;
-          break;
-        case 'd': // Decrease height
-          if (activeShape.height > 5) activeShape.height -= 5;
-          break;
-        default:
-          break;
-      }
-
-      setShapes(newShapes);
-    };
-
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [shapes, activeShapeId, speed, mapWidth, mapHeight, colorOptions, colorIndex]);
+  }, [shapes, activeShapeId, speed]);
 
-  const handleShapeClick = (id) => {
-    console.log('Shape clicked:', id);
-    setActiveShapeId(id);
-  };
+  const handleShapeClick = (id) => setActiveShapeId(id);
 
-  const handleDragStart = (id) => {
-    console.log('Drag started on shape:', id);
-    setIsDragging(true);
-  };
+  const handleDragStart = (id) => setIsDragging(true);
 
   const handleDragEnd = (e, id) => {
-    console.log('Drag ended on shape:', id);
-  
-    // Get the new position of the dragged shape
-    const newX = e.target.x();
-    const newY = e.target.y();
-  
-    // Check if the shape is completely outside the boundaries
-    const isOutOfBounds =
-      newX < 0 || newY < 0 || newX > mapWidth || newY > mapHeight;
-  
-    // Update the shape's position
+    const newX = Math.max(0, Math.min(e.target.x(), mapWidth));
+    const newY = Math.max(0, Math.min(e.target.y(), mapHeight));
+
     const newShapes = shapes.map(shape =>
-      shape.id === id
-        ? {
-            ...shape,
-            x: isOutOfBounds ? scalePosition.x-200 : Math.max(0, Math.min(newX, mapWidth)),
-            y: isOutOfBounds ? scalePosition.y-200 : Math.max(0, Math.min(newY, mapHeight))
-          }
-        : shape
+      shape.id === id ? { ...shape, x: newX, y: newY } : shape
     );
-  
+
     setShapes(newShapes);
+    saveBoatOnMap({ ...shapes.find(shape => shape.id === id), x: newX, y: newY });
+    setIsDragging(false);
   };
 
   const handleScaleDragEnd = (e) => {
     const newX = Math.max(0, Math.min(e.target.x(), mapWidth));
     const newY = Math.max(0, Math.min(e.target.y(), mapHeight));
-    console.log(`Scale drag ended at x ${newX} y ${newY}`);
     setScalePosition({ x: newX, y: newY });
   };
 
   const addNewBoat = () => {
     const newId = shapes.length ? Math.max(...shapes.map(shape => shape.id)) + 1 : 1;
-    console.log('Adding new boat with ID:', newId);
-    setShapes([...shapes, { id: newId, x: 200, y: 200, width: 100, height: 50, color: 'purple', angle: 0, border: null, }]);
-  };
+    const newBoat = { id: newId, x: 200, y: 200, width: 100, height: 50, color: 'purple', angle: 0 };
+    setShapes([...shapes, newBoat]);
 
-  const confirmDeletion = () => {
-    setShapes(shapes.filter(shape => shape.id !== activeShapeId));
-    setActiveShapeId(null);
-    setShowConfirmation(false);
-  };
-
-  const cancelDeletion = () => {
-    setShowConfirmation(false);
+    axios.post('http://localhost:5000/boats-on-map', newBoat)
+      .then(() => console.log('New boat added to backend'))
+      .catch(error => console.error('Error adding new boat:', error));
   };
 
   const bringBoatToCenter = () => {
-    if (activeShapeId === null) {
-      console.log("No boat selected to bring back to center.");
-      return;
-    }
-  
-    // Update the position of the active shape to the center of the map
+    if (activeShapeId === null) return;
+
     const newShapes = shapes.map(shape =>
       shape.id === activeShapeId
         ? { ...shape, x: mapWidth / 2, y: mapHeight / 2 }
         : shape
     );
-  
+
     setShapes(newShapes);
-    console.log(`Boat with ID ${activeShapeId} brought back to center.`);
+    saveBoatOnMap({ ...shapes.find(shape => shape.id === activeShapeId), x: mapWidth / 2, y: mapHeight / 2 });
   };
-  
+
+  const confirmDeletion = () => {
+    const shapeToDelete = shapes.find(shape => shape.id === activeShapeId);
+    if (!shapeToDelete) return;
+
+    axios.delete(`http://localhost:5000/boats-on-map/${activeShapeId}`)
+      .then(() => {
+        setShapes(shapes.filter(shape => shape.id !== activeShapeId));
+        setActiveShapeId(null);
+        setShowConfirmation(false);
+      })
+      .catch(error => console.error('Error deleting boat:', error));
+  };
+
   return (
     <div>
       <Stage width={mapWidth} height={mapHeight} className="map-canvas">
@@ -236,13 +205,14 @@ function Map() {
           />
         </label>
         <button onClick={addNewBoat}>Add Boat to Map</button>
+        <button onClick={clearAllBoatData}>Clear All Boat Data</button>
         <button onClick={bringBoatToCenter}>Bring Boat Back to Center</button>
       </div>
       {showConfirmation && (
         <AreYouSure
           message="Are you sure you want to delete this boat?"
           onYes={confirmDeletion}
-          onNo={cancelDeletion}
+          onNo={() => setShowConfirmation(false)}
         />
       )}
     </div>
