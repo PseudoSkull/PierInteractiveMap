@@ -31,7 +31,7 @@ function BoatList({ boats = [], onEdit, onDelete }) {
             Customer: {boat.customer_name}
           </div>
           <div style={{ flex: '1 1 30%', textAlign: 'right' }}>
-            <button onClick={() => onEdit(boat)} style={{ marginRight: '10px' }}>View</button>
+            <button onClick={() => onEdit(boat)} style={{ marginRight: '10px' }}>Info</button>
             <button onClick={() => onDelete(boat.id)}>Delete</button>
             <button onClick={() => handleViewBoatOnMap(boat)}>
               {boat.boat_on_map_id ? "View Boat on Map" : "Unassigned"}

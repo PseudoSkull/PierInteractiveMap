@@ -10,15 +10,20 @@ import Map from './components/Map'; // Import the new Map component
 import './styles/App.css';
 
 function App() {
-  const [boats, setBoats] = useState([]); // All boats fetched from the backend
+  const [boats, setBoats] = useState([]); // All boats (for the list) fetched from the backend
   const [filteredBoats, setFilteredBoats] = useState([]); // Boats displayed after filtering or search
   const [currentPage, setCurrentPage] = useState(1); // Current page for pagination
   const [boatsPerPage] = useState(10); // Number of boats per page
   const [totalPages, setTotalPages] = useState(1); // Total pages available
   const [selectedBoat, setSelectedBoat] = useState(null); // Boat selected for editing or viewing
   const [showForm, setShowForm] = useState(false); // Show or hide boat form modal
-  const [showConfirmation, setShowConfirmation] = useState(false); // Show or hide delete confirmation modal
   const [deleteBoatId, setDeleteBoatId] = useState(null); // ID of the boat to be deleted
+
+  // Map-related
+  const [boatsOnMap, setBoatsOnMap] = useState([]); // All boats (for the map) fetched from the backend
+  const [activeBoatOnMapId, setActiveBoatOnMapId] = useState(null);
+  
+  const [showConfirmation, setShowConfirmation] = useState(false); // Show or hide delete confirmation modal
 
   const API_URL = 'http://localhost:5000/boats'; // Base URL for the API
 
@@ -132,6 +137,22 @@ function App() {
     updateTotalPages(boats);
   };
 
+  const fetchBoatsOnMap = () => {
+    axios.get('http://localhost:5000/boats-on-map')
+      .then(response => setBoatsOnMap(response.data.boats_on_map))
+      .catch(error => console.error('Error loading boats-on-map data:', error));
+  };
+  
+  useEffect(() => {
+    fetchBoatsOnMap();
+  }, []);
+
+  const saveBoatOnMap = (updatedShape) => {
+    axios.put(`http://localhost:5000/boats-on-map/${updatedShape.id}`, updatedShape)
+      .then(() => console.log('BoatOnMap updated successfully'))
+      .catch(error => console.error('Error saving boat-on-map data:', error));
+  };
+
   const currentBoats = filteredBoats.slice(
     (currentPage - 1) * boatsPerPage,
     currentPage * boatsPerPage
@@ -142,7 +163,13 @@ function App() {
       <Header onSearch={handleSearch} onClear={handleClearSearch} />
       <div className="container">
         <div className="map-section">
-          <Map />
+          <Map
+            boatsOnMap={boatsOnMap}
+            setBoatsOnMap={setBoatsOnMap}
+            saveBoatOnMap={saveBoatOnMap}
+            activeBoatOnMapId={activeBoatOnMapId}
+            setActiveBoatOnMapId={setActiveBoatOnMapId}
+          />
         </div>
         <div className="listing-section">
           <h2>Boat Listings</h2>
