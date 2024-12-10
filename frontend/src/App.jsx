@@ -10,12 +10,13 @@ import Map from './components/Map'; // Import the new Map component
 import './styles/App.css';
 
 function App() {
-  const [boats, setBoats] = useState([]); // All boats (for the list) fetched from the backend
+  // List-related
+  const [boatListings, setBoatListings] = useState([]); // All boats (for the list) fetched from the backend
   const [filteredBoats, setFilteredBoats] = useState([]); // Boats displayed after filtering or search
   const [currentPage, setCurrentPage] = useState(1); // Current page for pagination
-  const [boatsPerPage] = useState(10); // Number of boats per page
+  const [boatListingsPerPage] = useState(10); // Number of boat listings per page
   const [totalPages, setTotalPages] = useState(1); // Total pages available
-  const [selectedBoat, setSelectedBoat] = useState(null); // Boat selected for editing or viewing
+  const [selectedBoatListing, setSelectedBoatListing] = useState(null); // Boat selected for editing or viewing
   const [showForm, setShowForm] = useState(false); // Show or hide boat form modal
   const [deleteBoatId, setDeleteBoatId] = useState(null); // ID of the boat to be deleted
 
@@ -28,16 +29,16 @@ function App() {
   const API_URL = 'http://localhost:5000/boats'; // Base URL for the API
 
   useEffect(() => {
-    fetchAllBoats();
+    fetchAllBoatListings();
   }, []);
 
-  const fetchAllBoats = () => {
+  const fetchAllBoatListings = () => {
     axios.get(API_URL)
       .then(response => {
         const boatData = response.data.boats || [];
-        setBoats(boatData);
+        setBoatListings(boatData);
         setFilteredBoats(boatData);
-        setTotalPages(Math.ceil(boatData.length / boatsPerPage));
+        setTotalPages(Math.ceil(boatData.length / boatListingsPerPage));
       })
       .catch(error => console.error('Error fetching boats:', error));
   };
@@ -45,17 +46,17 @@ function App() {
   const handleDelete = (id) => {
     axios.delete(`${API_URL}/${id}`)
       .then(() => {
-        const updatedBoats = boats.filter(boat => boat.id !== id);
-        setBoats(updatedBoats);
-        setFilteredBoats(updatedBoats);
+        const updatedBoatListings = boatListings.filter(boat => boat.id !== id);
+        setBoatListings(updatedBoatListings);
+        setFilteredBoats(updatedBoatListings);
         setShowConfirmation(false);
-        updateTotalPages(updatedBoats);
+        updateTotalPages(updatedBoatListings);
       })
       .catch(error => console.error('Error deleting boat:', error));
   };
 
   const updateTotalPages = (filteredBoatsList) => {
-    setTotalPages(Math.ceil(filteredBoatsList.length / boatsPerPage));
+    setTotalPages(Math.ceil(filteredBoatsList.length / boatListingsPerPage));
   };
 
   const handlePageChange = (direction) => {
@@ -67,12 +68,12 @@ function App() {
   };
 
   const openForm = (boat = null) => {
-    setSelectedBoat(boat);
+    setSelectedBoatListing(boat);
     setShowForm(true);
   };
 
   const closeForm = () => {
-    setSelectedBoat(null);
+    setSelectedBoatListing(null);
     setShowForm(false);
   };
 
@@ -85,14 +86,14 @@ function App() {
     if (boat.id) {
       axios.put(`${API_URL}/${boat.id}`, boat)
         .then(() => {
-          fetchAllBoats();
+          fetchAllBoatListings();
           closeForm();
         })
         .catch(error => console.error('Error updating boat:', error));
     } else {
       axios.post(API_URL, boat)
         .then(() => {
-          fetchAllBoats();
+          fetchAllBoatListings();
           closeForm();
         })
         .catch(error => console.error('Error creating boat:', error));
@@ -100,13 +101,13 @@ function App() {
   };
 
   const handleSearch = ({ type, value }) => {
-    let filtered = boats;
+    let filtered = boatListings;
 
     if (type === 'index') {
-      filtered = boats.filter(boat => boat.index === parseInt(value));
+      filtered = boatListings.filter(boat => boat.index === parseInt(value));
     } else if (type === 'text') {
       const lowerTerm = value.toLowerCase();
-      filtered = boats.filter(boat => {
+      filtered = boatListings.filter(boat => {
         return (
           (boat.name && boat.name.toLowerCase().includes(lowerTerm)) ||
           (boat.customer_name && boat.customer_name.toLowerCase().includes(lowerTerm)) ||
@@ -125,16 +126,16 @@ function App() {
   const clearAllBoatData = () => {
     axios.delete('http://localhost:5000/boats-on-map/clear')
       .then(() => {
-        setShapes([{ id: 1, x: 200, y: 200, width: 100, height: 50, color: 'purple', angle: 0 }]);
+        setBoatsOnMap([{ id: 1, x: 200, y: 200, width: 100, height: 50, color: 'purple', angle: 0 }]);
       })
-      .catch(error => console.error('Error clearing boats:', error));
+      .catch(error => console.error('Error clearing boats on map:', error));
   };
   
 
   const handleClearSearch = () => {
-    setFilteredBoats(boats);
+    setFilteredBoats(boatListings);
     setCurrentPage(1);
-    updateTotalPages(boats);
+    updateTotalPages(boatListings);
   };
 
   const fetchBoatsOnMap = () => {
@@ -153,9 +154,9 @@ function App() {
       .catch(error => console.error('Error saving boat-on-map data:', error));
   };
 
-  const currentBoats = filteredBoats.slice(
-    (currentPage - 1) * boatsPerPage,
-    currentPage * boatsPerPage
+  const currentBoatListings = filteredBoats.slice(
+    (currentPage - 1) * boatListingsPerPage,
+    currentPage * boatListingsPerPage
   );
 
   return (
@@ -182,14 +183,15 @@ function App() {
             <button onClick={() => handlePageChange('next')} disabled={currentPage === totalPages}>{'->'}</button>
           </div>
           <BoatList
-            boats={currentBoats}
+            boatListings={currentBoatListings}
             onEdit={openForm}
             onDelete={confirmDelete}
+            setBoatsOnMap={setBoatsOnMap}
           />
         </div>
       </div>
       {showForm && (
-        <BoatForm boat={selectedBoat} onSave={handleSave} onClose={closeForm} />
+        <BoatForm boat={selectedBoatListing} onSave={handleSave} onClose={closeForm} />
       )}
       {showConfirmation && (
         <AreYouSure
