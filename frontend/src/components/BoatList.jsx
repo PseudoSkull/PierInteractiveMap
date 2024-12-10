@@ -20,7 +20,7 @@ function BoatList({ boatListings = [], onEdit, onDelete, boatsOnMap, setBoatsOnM
   return (
     <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
       {boatListings.map(boatListing => (
-        <li key={boatListing.id} style={{ borderBottom: '1px solid #ccc', padding: '10px 0', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+        <li key={boatListing.boat_listing_id} style={{ borderBottom: '1px solid #ccc', padding: '10px 0', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap' }}>
           <div style={{ flex: '1 1 70%' }}>
             <strong>
               {boatListing.name 
@@ -32,7 +32,7 @@ function BoatList({ boatListings = [], onEdit, onDelete, boatsOnMap, setBoatsOnM
           </div>
           <div style={{ flex: '1 1 30%', textAlign: 'right' }}>
             <button onClick={() => onEdit(boatListing)} style={{ marginRight: '10px' }}>Info</button>
-            <button onClick={() => onDelete(boatListing.id)}>Delete</button>
+            <button onClick={() => onDelete(boatListing.boat_listing_id)}>Delete</button>
             <button onClick={() => handleViewBoatOnMap(boatListing)}>
               {boatListing.boat_on_map_id ? "View Boat on Map" : "Unassigned"}
             </button>

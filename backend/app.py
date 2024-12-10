@@ -166,5 +166,10 @@ def delete_boat_on_map(id):
 
 if __name__ == "__main__":
     # Set the logging level
+    with app.app_context():
+        boat_listings = BoatListing.query.all()
+        print("THESE ARE THE BOATS")
+        for boat_listing in boat_listings:
+            print(boat_listing.to_dict())
     logging.basicConfig(level=logging.DEBUG)
     app.run(debug=True)

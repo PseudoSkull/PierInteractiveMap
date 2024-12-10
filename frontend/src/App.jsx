@@ -12,13 +12,13 @@ import './styles/App.css';
 function App() {
   // List-related
   const [boatListings, setBoatListings] = useState([]); // All boats (for the list) fetched from the backend
-  const [filteredBoats, setFilteredBoats] = useState([]); // Boats displayed after filtering or search
+  const [filteredBoatListings, setFilteredBoatListings] = useState([]); // Boats displayed after filtering or search
   const [currentPage, setCurrentPage] = useState(1); // Current page for pagination
   const [boatListingsPerPage] = useState(10); // Number of boat listings per page
   const [totalPages, setTotalPages] = useState(1); // Total pages available
   const [selectedBoatListing, setSelectedBoatListing] = useState(null); // Boat selected for editing or viewing
   const [showForm, setShowForm] = useState(false); // Show or hide boat form modal
-  const [deleteBoatId, setDeleteBoatId] = useState(null); // ID of the boat to be deleted
+  const [deleteBoatListingId, setDeleteBoatListingId] = useState(null); // ID of the boat to be deleted
 
   // Map-related
   const [boatsOnMap, setBoatsOnMap] = useState([]); // All boats (for the map) fetched from the backend
@@ -35,28 +35,28 @@ function App() {
   const fetchAllBoatListings = () => {
     axios.get(API_URL)
       .then(response => {
-        const boatData = response.data.boats || [];
+        const boatData = response.data.boat_listings || [];
         setBoatListings(boatData);
-        setFilteredBoats(boatData);
+        setFilteredBoatListings(boatData);
         setTotalPages(Math.ceil(boatData.length / boatListingsPerPage));
       })
       .catch(error => console.error('Error fetching boats:', error));
   };
 
-  const handleDelete = (id) => {
-    axios.delete(`${API_URL}/${id}`)
+  const handleDelete = (boatListingId) => {
+    axios.delete(`${API_URL}/${boatListingId}`)
       .then(() => {
-        const updatedBoatListings = boatListings.filter(boat => boat.id !== id);
+        const updatedBoatListings = boatListings.filter(boatListing => boatListing.boat_listing_id !== boatListingId);
         setBoatListings(updatedBoatListings);
-        setFilteredBoats(updatedBoatListings);
+        setFilteredBoatListings(updatedBoatListings);
         setShowConfirmation(false);
         updateTotalPages(updatedBoatListings);
       })
-      .catch(error => console.error('Error deleting boat:', error));
+      .catch(error => console.error('Error deleting boat listing:', error));
   };
 
-  const updateTotalPages = (filteredBoatsList) => {
-    setTotalPages(Math.ceil(filteredBoatsList.length / boatListingsPerPage));
+  const updateTotalPages = (filteredBoatListingsList) => {
+    setTotalPages(Math.ceil(filteredBoatListingsList.length / boatListingsPerPage));
   };
 
   const handlePageChange = (direction) => {
@@ -77,26 +77,27 @@ function App() {
     setShowForm(false);
   };
 
-  const confirmDelete = (id) => {
-    setDeleteBoatId(id);
+  const confirmDelete = (boatListingId) => {
+    setDeleteBoatListingId(boatListingId);
     setShowConfirmation(true);
   };
 
-  const handleSave = (boat) => {
-    if (boat.id) {
-      axios.put(`${API_URL}/${boat.id}`, boat)
+  const handleSave = (boatListing) => {
+    const boatListingId = boatListing.boat_listing_id;
+    if (boatListingId) {
+      axios.put(`${API_URL}/${boatListingId}`, boatListing)
         .then(() => {
           fetchAllBoatListings();
           closeForm();
         })
-        .catch(error => console.error('Error updating boat:', error));
+        .catch(error => console.error('Error updating boat listing:', error));
     } else {
-      axios.post(API_URL, boat)
+      axios.post(API_URL, boatListing)
         .then(() => {
           fetchAllBoatListings();
           closeForm();
         })
-        .catch(error => console.error('Error creating boat:', error));
+        .catch(error => console.error('Error creating boat listing:', error));
     }
   };
 
@@ -104,21 +105,21 @@ function App() {
     let filtered = boatListings;
 
     if (type === 'index') {
-      filtered = boatListings.filter(boat => boat.index === parseInt(value));
+      filtered = boatListings.filter(boatListing => boatListing.index === parseInt(value));
     } else if (type === 'text') {
       const lowerTerm = value.toLowerCase();
-      filtered = boatListings.filter(boat => {
+      filtered = boatListings.filter(boatListing => {
         return (
-          (boat.name && boat.name.toLowerCase().includes(lowerTerm)) ||
-          (boat.customer_name && boat.customer_name.toLowerCase().includes(lowerTerm)) ||
-          (boat.size && boat.size.toString().includes(value)) ||
-          (boat.make_model && boat.make_model.toLowerCase().includes(lowerTerm)) ||
-          (boat.vehicle_type && boat.vehicle_type.toLowerCase().includes(lowerTerm))
+          (boatListing.name && boatListing.name.toLowerCase().includes(lowerTerm)) ||
+          (boatListing.customer_name && boatListing.customer_name.toLowerCase().includes(lowerTerm)) ||
+          (boatListing.size && boatListing.size.toString().includes(value)) ||
+          (boatListing.make_model && boatListing.make_model.toLowerCase().includes(lowerTerm)) ||
+          (boatListing.vehicle_type && boatListing.vehicle_type.toLowerCase().includes(lowerTerm))
         );
       });
     }
 
-    setFilteredBoats(filtered);
+    setFilteredBoatListings(filtered);
     setCurrentPage(1);
     updateTotalPages(filtered);
   };
@@ -133,7 +134,7 @@ function App() {
   
 
   const handleClearSearch = () => {
-    setFilteredBoats(boatListings);
+    setFilteredBoatListings(boatListings);
     setCurrentPage(1);
     updateTotalPages(boatListings);
   };
@@ -154,7 +155,7 @@ function App() {
       .catch(error => console.error('Error saving boatOnMap data:', error));
   };
 
-  const currentBoatListings = filteredBoats.slice(
+  const currentBoatListings = filteredBoatListings.slice(
     (currentPage - 1) * boatListingsPerPage,
     currentPage * boatListingsPerPage
   );
@@ -197,7 +198,7 @@ function App() {
       {showConfirmation && (
         <AreYouSure
           message="Are you sure you want to delete this boat?"
-          onYes={() => handleDelete(deleteBoatId)}
+          onYes={() => handleDelete(deleteBoatListingId)}
           onNo={() => setShowConfirmation(false)}
         />
       )}
