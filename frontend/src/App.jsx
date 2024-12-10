@@ -44,16 +44,20 @@ function App() {
   };
 
   const handleDelete = (boatListingId) => {
-    axios.delete(`${API_URL}/${boatListingId}`)
+    axios
+      .delete(`${API_URL}/${boatListingId}`)
       .then(() => {
-        const updatedBoatListings = boatListings.filter(boatListing => boatListing.boat_listing_id !== boatListingId);
+        const updatedBoatListings = boatListings.filter(
+          (boatListing) => boatListing.boat_listing_id !== boatListingId
+        );
         setBoatListings(updatedBoatListings);
         setFilteredBoatListings(updatedBoatListings);
-        setShowConfirmation(false);
+        setShowConfirmation(false); // Close modal after deletion
         updateTotalPages(updatedBoatListings);
       })
-      .catch(error => console.error('Error deleting boat listing:', error));
+      .catch((error) => console.error('Error deleting boat listing:', error));
   };
+  
 
   const updateTotalPages = (filteredBoatListingsList) => {
     setTotalPages(Math.ceil(filteredBoatListingsList.length / boatListingsPerPage));
@@ -78,9 +82,22 @@ function App() {
   };
 
   const confirmDelete = (boatListingId) => {
-    setDeleteBoatListingId(boatListingId);
-    setShowConfirmation(true);
+    const boatToDelete = boatListings.find(
+      (boatListing) => boatListing.boat_listing_id === boatListingId
+    );
+  
+    if (!boatToDelete) {
+      console.error('Boat listing not found.');
+      return;
+    }
+  
+    setShowConfirmation({
+      message: `Are you sure you want to delete Boat Listing '${boatToDelete.name || 'Untitled'}'?`,
+      onYes: () => handleDelete(boatListingId),
+      onNo: () => setShowConfirmation(false),
+    });
   };
+  
 
   const handleSave = (boatListing) => {
     const boatListingId = boatListing.boat_listing_id;
@@ -174,6 +191,29 @@ function App() {
     }
   };
 
+  const assignBoatToMap = (boatListing) => {
+    console.log(`Active Boat: ${activeBoatOnMapId}`)
+    if (!activeBoatOnMapId) {
+      alert('No active boat selected on the map.');
+      return;
+    }
+  
+    setShowConfirmation({
+      message: `Assign this map selection to Boat Listing ‘${boatListing.name || 'Untitled'}’?`,
+      onYes: () => {
+        const updatedBoatListing = { ...boatListing, boat_on_map_id: activeBoatOnMapId };
+        axios.put(`${API_URL}/${boatListing.boat_listing_id}`, updatedBoatListing)
+          .then(() => {
+            fetchAllBoatListings(); // Refresh data after update
+            setShowConfirmation(false); // Close modal
+          })
+          .catch(error => console.error('Error assigning boat to map:', error));
+      },
+      onNo: () => setShowConfirmation(false),
+    });
+  };
+  
+
   return (
     <div className="app">
       <Header onSearch={handleSearch} onClear={handleClearSearch} />
@@ -203,6 +243,8 @@ function App() {
             onDelete={confirmDelete}
             boatsOnMap={boatsOnMap}
             setBoatsOnMap={setBoatsOnMap}
+            activeBoatOnMapId={activeBoatOnMapId}
+            assignBoatToMap={assignBoatToMap}
           />
         </div>
       </div>
@@ -211,9 +253,9 @@ function App() {
       )}
       {showConfirmation && (
         <AreYouSure
-          message="Are you sure you want to delete this boat?"
-          onYes={() => handleDelete(deleteBoatListingId)}
-          onNo={() => setShowConfirmation(false)}
+          message={showConfirmation.message}
+          onYes={showConfirmation.onYes}
+          onNo={showConfirmation.onNo}
         />
       )}
     </div>
