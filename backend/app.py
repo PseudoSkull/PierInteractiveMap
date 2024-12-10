@@ -109,6 +109,8 @@ def update_boat_listing(boat_id):
     boat_listing.section = data['section']
     boat_listing.customer_name = data.get('customer_name')  # Update new field
     boat_listing.vehicle_type = data.get('vehicle_type')  # Update new field
+    boat_listing.boat_on_map_id = data.get('boat_on_map_id')
+    print(f"Yes, we are getting here. Here's the boat listing: {boat_listing} Here's data's boat_on_map_id: {data['boat_on_map_id']}")
     db.session.commit()
     return jsonify(boat_listing.to_dict())
 

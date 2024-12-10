@@ -191,8 +191,7 @@ function App() {
     }
   };
 
-  const assignBoatToMap = (boatListing) => {
-    console.log(`Active Boat: ${activeBoatOnMapId}`)
+  const assignBoatListingToMap = (boatListing) => {
     if (!activeBoatOnMapId) {
       alert('No active boat selected on the map.');
       return;
@@ -202,16 +201,18 @@ function App() {
       message: `Assign this map selection to Boat Listing ‘${boatListing.name || 'Untitled'}’?`,
       onYes: () => {
         const updatedBoatListing = { ...boatListing, boat_on_map_id: activeBoatOnMapId };
-        axios.put(`${API_URL}/${boatListing.boat_listing_id}`, updatedBoatListing)
+        console.log("Here's your updated boat listing:", updatedBoatListing);
+        axios
+          .put(`${API_URL}/${boatListing.boat_listing_id}`, updatedBoatListing)
           .then(() => {
             fetchAllBoatListings(); // Refresh data after update
             setShowConfirmation(false); // Close modal
           })
-          .catch(error => console.error('Error assigning boat to map:', error));
+          .catch((error) => console.error('Error assigning boat listing to map:', error));
       },
       onNo: () => setShowConfirmation(false),
     });
-  };
+  };  
   
 
   return (
@@ -244,7 +245,7 @@ function App() {
             boatsOnMap={boatsOnMap}
             setBoatsOnMap={setBoatsOnMap}
             activeBoatOnMapId={activeBoatOnMapId}
-            assignBoatToMap={assignBoatToMap}
+            assignBoatListingToMap={assignBoatListingToMap}
           />
         </div>
       </div>

@@ -2,15 +2,7 @@
 
 import React from 'react';
 
-function BoatList({ boatListings, onEdit, onDelete, boatsOnMap, setBoatsOnMap, activeBoatOnMapId, assignBoatToMap }) {
-  // const handleAssignBoatOnMap = (boatListing) => {
-  //   if (!activeBoatOnMapId) {
-  //     alert('No active boat selected on the map.');
-  //     return;
-  //   }
-
-  //   assignBoatToMap(boatListing);
-  // };
+function BoatList({ boatListings, onEdit, onDelete, boatsOnMap, setBoatsOnMap, activeBoatOnMapId, assignBoatListingToMap }) {
 
   if (!boatListings || boatListings.length === 0) {
     return <p>No boat listings available. Add a new boat to get started!</p>;
@@ -44,7 +36,7 @@ function BoatList({ boatListings, onEdit, onDelete, boatsOnMap, setBoatsOnMap, a
             {boatListing.boat_on_map_id ? (
               <button>View Boat on Map</button>
             ) : (
-              <button onClick={() => assignBoatToMap(boatListing)}>Unassigned</button>
+              <button onClick={() => assignBoatListingToMap(boatListing)}>Unassigned</button>
             )}
           </div>
         </li>
