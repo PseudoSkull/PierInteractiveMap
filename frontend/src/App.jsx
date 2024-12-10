@@ -26,7 +26,7 @@ function App() {
   
   const [showConfirmation, setShowConfirmation] = useState(false); // Show or hide delete confirmation modal
 
-  const API_URL = 'http://localhost:5000/boats'; // Base URL for the API
+  const API_URL = 'http://localhost:5000/boat_listings'; // Base URL for the boat listing API
 
   useEffect(() => {
     fetchAllBoatListings();
@@ -148,10 +148,10 @@ function App() {
     fetchBoatsOnMap();
   }, []);
 
-  const saveBoatOnMap = (updatedShape) => {
-    axios.put(`http://localhost:5000/boats-on-map/${updatedShape.id}`, updatedShape)
+  const saveBoatOnMap = (updatedBoatOnMap) => {
+    axios.put(`http://localhost:5000/boats-on-map/${updatedBoatOnMap.boat_on_map_id}`, updatedBoatOnMap)
       .then(() => console.log('BoatOnMap updated successfully'))
-      .catch(error => console.error('Error saving boat-on-map data:', error));
+      .catch(error => console.error('Error saving boatOnMap data:', error));
   };
 
   const currentBoatListings = filteredBoats.slice(
@@ -186,6 +186,7 @@ function App() {
             boatListings={currentBoatListings}
             onEdit={openForm}
             onDelete={confirmDelete}
+            boatsOnMap={boatsOnMap}
             setBoatsOnMap={setBoatsOnMap}
           />
         </div>

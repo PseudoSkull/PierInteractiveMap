@@ -2,14 +2,14 @@
 
 import React from 'react';
 
-function BoatList({ boatListings = [], onEdit, onDelete, setBoatsOnMap }) {
-  const handleViewBoatOnMap = (boat) => {
-    const boatOnMapId = boat.boat_on_map_id;
+function BoatList({ boatListings = [], onEdit, onDelete, boatsOnMap, setBoatsOnMap }) {
+  const handleViewBoatOnMap = (boatListing) => {
+    const boatOnMapId = boatListing.boat_on_map_id;
     if (!boatOnMapId) return;
   
     alert(`This is where the boat for ${boat.name} is`);
-    setBoatsOnMap(shapes.map(shape =>
-      shape.id === boatOnMapId ? { ...shape, visible: true } : { ...shape, visible: false }
+    setBoatsOnMap(boatsOnMap.map(boatOnMap =>
+      boatOnMap.boat_on_map_id === boatOnMapId ? { ...shape, visible: true } : { ...shape, visible: false }
     ));
   };
 

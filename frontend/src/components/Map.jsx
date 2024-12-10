@@ -44,69 +44,69 @@ function Map({ boatsOnMap, setBoatsOnMap, saveBoatOnMap, activeBoatOnMapId, setA
       }
 
       if (activeBoatOnMapId === null) {
-        console.log('No active shape to control');
+        console.log('No active boatOnMap to control');
         return;
       }
 
-      let newShapes = [...boatsOnMap];
-      const activeShape = newShapes.find(shape => shape.id === activeBoatOnMapId);
+      let newBoatsOnMap = [...boatsOnMap];
+      const activeBoatOnMap = newBoatsOnMap.find(boatOnMap => boatOnMap.boat_on_map_id === activeBoatOnMapId);
 
-      if (!activeShape) {
-        console.log('Active shape not found');
+      if (!activeBoatOnMap) {
+        console.log('Active boatOnMap not found');
         return;
       }
 
       switch (e.key) {
         case 'u': // Up
-          activeShape.y = Math.max(activeShape.y - speed, maxUp);
+          activeBoatOnMap.y = Math.max(activeBoatOnMap.y - speed, maxUp);
           break;
         case 'n': // Down
-          activeShape.y = Math.min(activeShape.y + speed, maxDown);
+          activeBoatOnMap.y = Math.min(activeBoatOnMap.y + speed, maxDown);
           break;
         case 'h': // Left
-          activeShape.x = Math.max(activeShape.x - speed, maxLeft);
+          activeBoatOnMap.x = Math.max(activeBoatOnMap.x - speed, maxLeft);
           break;
         case 'j': // Right
-          activeShape.x = Math.min(activeShape.x + speed, maxRight);
+          activeBoatOnMap.x = Math.min(activeBoatOnMap.x + speed, maxRight);
           break;
         case '[': // Rotate counterclockwise
-          activeShape.angle -= 5;
+          activeBoatOnMap.angle -= 5;
           break;
         case ']': // Rotate clockwise
-          activeShape.angle += 5;
+          activeBoatOnMap.angle += 5;
           break;
         case '=': // Increase size
-          activeShape.width += 5;
-          activeShape.height += 3.5;
+          activeBoatOnMap.width += 5;
+          activeBoatOnMap.height += 3.5;
           break;
         case '-': // Decrease size
-          if (activeShape.width > 1 && activeShape.height > 0.5) {
-            activeShape.width -= 5;
-            activeShape.height -= 3.5;
+          if (activeBoatOnMap.width > 1 && activeBoatOnMap.height > 0.5) {
+            activeBoatOnMap.width -= 5;
+            activeBoatOnMap.height -= 3.5;
           }
           break;
         case 'c': // Change color
           setColorIndex((prevIndex) => (prevIndex + 1) % colorOptions.length);
-          activeShape.color = colorOptions[(colorIndex + 1) % colorOptions.length];
+          activeBoatOnMap.color = colorOptions[(colorIndex + 1) % colorOptions.length];
           break;
         case 'w': // Increase width
-          activeShape.width += 5;
+          activeBoatOnMap.width += 5;
           break;
         case 'e': // Increase height
-          activeShape.height += 5;
+          activeBoatOnMap.height += 5;
           break;
         case 's': // Decrease width
-          if (activeShape.width > 5) activeShape.width -= 5;
+          if (activeBoatOnMap.width > 5) activeBoatOnMap.width -= 5;
           break;
         case 'd': // Decrease height
-          if (activeShape.height > 5) activeShape.height -= 5;
+          if (activeBoatOnMap.height > 5) activeBoatOnMap.height -= 5;
           break;
         default:
           break;
       }
 
-      setBoatsOnMap(newShapes);
-      saveBoatOnMap(activeShape); // Save the updated shape to the backend
+      setBoatsOnMap(newBoatsOnMap);
+      saveBoatOnMap(activeBoatOnMap); // Save the updated boatOnMap to the backend
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -115,31 +115,31 @@ function Map({ boatsOnMap, setBoatsOnMap, saveBoatOnMap, activeBoatOnMapId, setA
     };
   }, [boatsOnMap, activeBoatOnMapId, speed, mapWidth, mapHeight, colorOptions, colorIndex]);
 
-  const handleShapeClick = (id) => {
-    console.log('Shape clicked:', id);
-    setActiveBoatOnMapId(id);
+  const handleBoatOnMapClick = (boatOnMapId) => {
+    console.log('boatOnMap clicked:', boatOnMapId);
+    setActiveBoatOnMapId(boatOnMapId);
   };
 
-  const handleDragStart = (id) => {
-    console.log('Drag started on shape:', id);
+  const handleDragStart = (boatOnMapId) => {
+    console.log('Drag started on boatOnMap:', boatOnMapId);
     setIsDragging(true);
-    setActiveBoatOnMapId(id);
+    setActiveBoatOnMapId(boatOnMapId);
   };
 
-  const handleDragEnd = (e, id) => {
-    console.log('Drag ended on shape:', id);
+  const handleDragEnd = (e, boatOnMapId) => {
+    console.log('Drag ended on boatOnMap:', boatOnMapId);
   
-    // Get the new position of the dragged shape
+    // Get the new position of the dragged boatOnMap
     const newX = e.target.x();
     const newY = e.target.y();
   
-    // Check if the shape is completely outside the boundaries
+    // Check if the boatOnMap is completely outside the boundaries
     const isOutOfBounds =
       newX < 0 || newY < 0 || newX > mapWidth || newY > mapHeight;
   
-    // Update the shape's position
+    // Update the boatOnMap's position
     const newBoatsOnMap = boatsOnMap.map(boatOnMap =>
-      boatOnMap.id === id
+      boatOnMap.boat_on_map_id === boatOnMapId
         ? {
             ...boatOnMap,
             x: isOutOfBounds ? scalePosition.x - 200 : Math.max(0, Math.min(newX, mapWidth)),
@@ -150,8 +150,8 @@ function Map({ boatsOnMap, setBoatsOnMap, saveBoatOnMap, activeBoatOnMapId, setA
   
     setBoatsOnMap(newBoatsOnMap);
 
-    // Save the updated shape position to the backend
-    const updatedBoatOnMap = newBoatsOnMap.find(shape => shape.id === id);
+    // Save the updated boatOnMap position to the backend
+    const updatedBoatOnMap = newBoatsOnMap.find(boatOnMap => boatOnMap.boat_on_map_id === boatOnMapId);
     if (updatedBoatOnMap) {
       saveBoatOnMap(updatedBoatOnMap);
     }
@@ -165,9 +165,9 @@ function Map({ boatsOnMap, setBoatsOnMap, saveBoatOnMap, activeBoatOnMapId, setA
   };
 
   const addNewBoat = () => {
-    const newId = boatsOnMap.length ? Math.max(...boatsOnMap.map(shape => shape.id)) + 1 : 1;
-    console.log('Adding new boat with ID:', newId);
-    const newBoat = { id: newId, x: 200, y: 200, width: 100, height: 50, color: 'purple', angle: 0, border: null };
+    const newBoatOnMapId = boatsOnMap.length ? Math.max(...boatsOnMap.map(boatOnMap => boatOnMap.boat_on_map_id)) + 1 : 1;
+    console.log('Adding new boat with ID:', newBoatOnMapId);
+    const newBoat = { boat_on_map_id: newBoatOnMapId, x: 200, y: 200, width: 100, height: 50, color: 'purple', angle: 0, border: null };
     setBoatsOnMap([...boatsOnMap, newBoat]);
 
     // Add new boat to the backend
@@ -177,12 +177,12 @@ function Map({ boatsOnMap, setBoatsOnMap, saveBoatOnMap, activeBoatOnMapId, setA
   };
 
   const confirmDeletion = () => {
-    const shapeToDelete = boatsOnMap.find(shape => shape.id === activeBoatOnMapId);
-    if (!shapeToDelete) return;
+    const boatOnMapToDelete = boatsOnMap.find(boatOnMap => boatOnMap.boat_on_map_id === activeBoatOnMapId);
+    if (!boatOnMapToDelete) return;
 
     axios.delete(`http://localhost:5000/boats-on-map/${activeBoatOnMapId}`)
       .then(() => {
-        setBoatsOnMap(boatsOnMap.filter(shape => shape.id !== activeBoatOnMapId));
+        setBoatsOnMap(boatsOnMap.filter(boatOnMap => boatOnMap.boat_on_map_id !== activeBoatOnMapId));
         setActiveBoatOnMapId(null);
         setShowConfirmation(false);
       })
@@ -199,21 +199,21 @@ function Map({ boatsOnMap, setBoatsOnMap, saveBoatOnMap, activeBoatOnMapId, setA
       return;
     }
   
-    // Update the position of the active shape to the center of the map
-    const newShapes = boatsOnMap.map(shape =>
-      shape.id === activeBoatOnMapId
-        ? { ...shape, x: mapWidth / 2, y: mapHeight / 2 }
-        : shape
+    // Update the position of the active boatOnMap to the center of the map
+    const newBoatsOnMap = boatsOnMap.map(boatOnMap =>
+      boatOnMap.boat_on_map_id === activeBoatOnMapId
+        ? { ...boatOnMap, x: mapWidth / 2, y: mapHeight / 2 }
+        : boatOnMap
     );
   
-    setBoatsOnMap(newShapes);
+    setBoatsOnMap(newBoatsOnMap);
 
-    // Save the updated shape position to the backend
-    const updatedShape = newShapes.find(shape => shape.id === activeBoatOnMapId);
-    if (updatedShape) {
-      saveBoatOnMap(updatedShape);
+    // Save the updated boatOnMap position to the backend
+    const updatedBoatOnMap = newBoatsOnMap.find(boatOnMap => boatOnMap.boat_on_map_id === activeBoatOnMapId);
+    if (updatedBoatOnMap) {
+      saveBoatOnMap(updatedBoatOnMap);
     }
-    console.log(`Boat with ID ${activeBoatOnMapId} brought back to center.`);
+    console.log(`Boat on map with ID ${activeBoatOnMapId} brought back to center.`);
   };
   
   return (
@@ -221,19 +221,19 @@ function Map({ boatsOnMap, setBoatsOnMap, saveBoatOnMap, activeBoatOnMapId, setA
       <Stage width={mapWidth} height={mapHeight} className="map-canvas">
         <Layer>
           <Image image={mapImage} width={mapWidth} height={mapHeight} />
-          {boatsOnMap.map(shape => (
+          {boatsOnMap.map(boatOnMap => (
             <Ellipse
-              key={shape.id}
-              x={shape.x}
-              y={shape.y}
-              width={shape.width}
-              height={shape.height}
-              fill={shape.color}
-              rotation={shape.angle}
+              key={boatOnMap.boat_on_map_id}
+              x={boatOnMap.x}
+              y={boatOnMap.y}
+              width={boatOnMap.width}
+              height={boatOnMap.height}
+              fill={boatOnMap.color}
+              rotation={boatOnMap.angle}
               draggable
-              onClick={() => handleShapeClick(shape.id)}
-              onDragStart={() => handleDragStart(shape.id)}
-              onDragEnd={(e) => handleDragEnd(e, shape.id)}
+              onClick={() => handleBoatOnMapClick(boatOnMap.boat_on_map_id)}
+              onDragStart={() => handleDragStart(boatOnMap.boat_on_map_id)}
+              onDragEnd={(e) => handleDragEnd(e, boatOnMap.boat_on_map_id)}
               stroke="black"
               strokeWidth={1}
             />

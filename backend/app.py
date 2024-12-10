@@ -6,9 +6,9 @@ from flask_cors import CORS  # Enable CORS for development; remember to configur
 from config.config import WEB_HOST_OF_APP, PORT_OF_MAP_FRONTEND
 import logging
 from flask_migrate import Migrate
+from sqlalchemy.inspection import inspect
 
 # Initialize Flask-Migrate
-
 
 ALLOWED_CORS_ORIGINS = [
     f"http://{WEB_HOST_OF_APP}:{PORT_OF_MAP_FRONTEND}",
@@ -25,8 +25,8 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
 
-class Boat(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+class BoatListing(db.Model):
+    boat_listing_id = db.Column(db.Integer, primary_key=True)
     size = db.Column(db.String(50))
     name = db.Column(db.String(100))
     make_model = db.Column(db.String(100))
@@ -39,24 +39,12 @@ class Boat(db.Model):
     boat_on_map_id = db.Column(db.Integer, nullable=True)  # Informational reference
 
     def to_dict(self):
-        return {
-            "id": self.id,
-            "size": self.size,
-            "name": self.name,
-            "make_model": self.make_model,
-            "notes": self.notes,
-            "index": self.index,
-            "section": self.section,
-            "mapped": self.mapped,
-            "customer_name": self.customer_name,
-            "vehicle_type": self.vehicle_type,
-            "boat_on_map_id": self.boat_on_map_id  # Include reference field
-        }
+        return {column.key: getattr(self, column.key) for column in inspect(self).mapper.column_attrs}
 
 
 class BoatOnMap(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    boat_id = db.Column(db.Integer, nullable=True)  # Informational reference
+    # id = db.Column(db.Integer, primary_key=True)
+    boat_on_map_id = db.Column(db.Integer, primary_key=True)
     x = db.Column(db.Float, nullable=False, default=200.0)
     y = db.Column(db.Float, nullable=False, default=200.0)
     width = db.Column(db.Float, nullable=False, default=100.0)
@@ -66,8 +54,7 @@ class BoatOnMap(db.Model):
 
     def to_dict(self):
         return {
-            "id": self.id,
-            "boat_id": self.boat_id,  # Include reference field
+            "boat_on_map_id": self.boat_on_map_id,  # Include reference field
             "x": self.x,
             "y": self.y,
             "width": self.width,
@@ -85,17 +72,17 @@ with app.app_context():
 
 # CRUD Operations
 
-@app.route('/boats', methods=['GET'])
-def get_boats():
-    boats = Boat.query.all()
+@app.route('/boat_listings', methods=['GET'])
+def get_boat_listings():
+    boat_listings = BoatListing.query.all()
     return jsonify({
-        "boats": [boat_to_dict(boat) for boat in boats],
+        "boat_listings": [boat_listing.to_dict() for boat_listing in boat_listings],
     })
 
-@app.route('/boats', methods=['POST'])
+@app.route('/boat_listings', methods=['POST'])
 def create_boat():
     data = request.json
-    new_boat = Boat(
+    new_boat = BoatListing(
         size=data['size'],
         name=data['name'],
         make_model=data['make_model'],
@@ -108,57 +95,43 @@ def create_boat():
     )
     db.session.add(new_boat)
     db.session.commit()
-    return jsonify(boat_to_dict(new_boat)), 201
+    return jsonify(new_boat.to_dict()), 201
 
-@app.route('/boats/<int:boat_id>', methods=['PUT'])
-def update_boat(boat_id):
+@app.route('/boat_listings/<int:boat_id>', methods=['PUT'])
+def update_boat_listing(boat_id):
     data = request.json
-    boat = Boat.query.get_or_404(boat_id)
-    boat.size = data['size']
-    boat.name = data['name']
-    boat.make_model = data['make_model']
-    boat.notes = data['notes']
-    boat.index = data['index']
-    boat.section = data['section']
-    boat.customer_name = data.get('customer_name')  # Update new field
-    boat.vehicle_type = data.get('vehicle_type')  # Update new field
+    boat_listing = BoatListing.query.get_or_404(boat_id)
+    boat_listing.size = data['size']
+    boat_listing.name = data['name']
+    boat_listing.make_model = data['make_model']
+    boat_listing.notes = data['notes']
+    boat_listing.index = data['index']
+    boat_listing.section = data['section']
+    boat_listing.customer_name = data.get('customer_name')  # Update new field
+    boat_listing.vehicle_type = data.get('vehicle_type')  # Update new field
     db.session.commit()
-    return jsonify(boat_to_dict(boat))
+    return jsonify(boat_listing.to_dict())
 
-@app.route('/boats/<int:boat_id>', methods=['DELETE'])
-def delete_boat(boat_id):
-    boat = Boat.query.get_or_404(boat_id)
+@app.route('/boat_listings/<int:boat_id>', methods=['DELETE'])
+def delete_boat_listing(boat_id):
+    boat = BoatListing.query.get_or_404(boat_id)
     db.session.delete(boat)
     db.session.commit()
-    return jsonify({"message": "Boat deleted successfully"})
+    return jsonify({"message": "Boat lsting deleted successfully"})
 
-# Update the boat_to_dict function to include the new fields
-def boat_to_dict(boat):
-    return {
-        "id": boat.id,
-        "size": boat.size,
-        "name": boat.name,
-        "make_model": boat.make_model,
-        "notes": boat.notes,
-        "index": boat.index,
-        "section": boat.section,
-        "mapped": boat.mapped,
-        "customer_name": boat.customer_name,  # Include new field
-        "vehicle_type": boat.vehicle_type  # Include new field
-    }
 
 @app.route('/boats-on-map', methods=['GET'])
 def get_boats_on_map():
     boats_on_map = BoatOnMap.query.all()
     return jsonify({
-        "boats_on_map": [boat_on_map_to_dict(bom) for bom in boats_on_map],
+        "boats_on_map": [boat_on_map.to_dict() for boat_on_map in boats_on_map],
     })
 
 @app.route('/boats-on-map', methods=['POST'])
 def create_boat_on_map():
     data = request.json
     new_boat_on_map = BoatOnMap(
-        boat_id=data.get('boat_id'),
+        boat_on_map_id=data.get('boat_on_map_id'),
         x=data['x'],
         y=data['y'],
         width=data['width'],
@@ -168,7 +141,7 @@ def create_boat_on_map():
     )
     db.session.add(new_boat_on_map)
     db.session.commit()
-    return jsonify(boat_on_map_to_dict(new_boat_on_map)), 201
+    return jsonify(new_boat_on_map.to_dict()), 201
 
 @app.route('/boats-on-map/<int:id>', methods=['PUT'])
 def update_boat_on_map(id):
@@ -181,7 +154,7 @@ def update_boat_on_map(id):
     boat_on_map.color = data['color']
     boat_on_map.angle = data['angle']
     db.session.commit()
-    return jsonify(boat_on_map_to_dict(boat_on_map))
+    return jsonify(boat_on_map.to_dict())
 
 @app.route('/boats-on-map/<int:id>', methods=['DELETE'])
 def delete_boat_on_map(id):
@@ -189,18 +162,6 @@ def delete_boat_on_map(id):
     db.session.delete(boat_on_map)
     db.session.commit()
     return jsonify({"message": "BoatOnMap data deleted successfully"})
-
-def boat_on_map_to_dict(bom):
-    return {
-        "id": bom.id,
-        "boat_id": bom.boat_id,
-        "x": bom.x,
-        "y": bom.y,
-        "width": bom.width,
-        "height": bom.height,
-        "color": bom.color,
-        "angle": bom.angle,
-    }
 
 
 if __name__ == "__main__":
