@@ -160,6 +160,20 @@ function App() {
     currentPage * boatListingsPerPage
   );
 
+  const matchBoatOnMapIdToBoatListing = (boatOnMapId) => {
+    const matchingBoatListings = boatListings.filter(
+      (boatListing) => boatListing.boat_on_map_id === boatOnMapId
+    );
+  
+    if (matchingBoatListings.length > 0) {
+      console.log(`Found ${matchingBoatListings.length} matching boat listing(s):`, matchingBoatListings);
+      return matchingBoatListings;
+    } else {
+      console.log('No matching boat listings found for the given boat_on_map_id.');
+      return [];
+    }
+  };
+
   return (
     <div className="app">
       <Header onSearch={handleSearch} onClear={handleClearSearch} />
