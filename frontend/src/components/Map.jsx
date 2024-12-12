@@ -164,18 +164,6 @@ function Map({ boatsOnMap, setBoatsOnMap, saveBoatOnMap, activeBoatOnMapId,  set
     setScalePosition({ x: newX, y: newY });
   };
 
-  const addNewBoat = () => {
-    const newBoatOnMapId = boatsOnMap.length ? Math.max(...boatsOnMap.map(boatOnMap => boatOnMap.boat_on_map_id)) + 1 : 1;
-    console.log('Adding new boat with ID:', newBoatOnMapId);
-    const newBoat = { boat_on_map_id: newBoatOnMapId, x: 200, y: 200, width: 100, height: 50, color: 'purple', angle: 0, border: null };
-    setBoatsOnMap([...boatsOnMap, newBoat]);
-
-    // Add new boat to the backend
-    axios.post('http://localhost:5000/boats-on-map', newBoat)
-      .then(() => console.log('New boat added to backend'))
-      .catch(error => console.error('Error adding new boat:', error));
-  };
-
   const confirmDeletion = () => {
     const boatOnMapToDelete = boatsOnMap.find(boatOnMap => boatOnMap.boat_on_map_id === activeBoatOnMapId);
     if (!boatOnMapToDelete) return;
@@ -191,29 +179,6 @@ function Map({ boatsOnMap, setBoatsOnMap, saveBoatOnMap, activeBoatOnMapId,  set
 
   const cancelDeletion = () => {
     setShowConfirmation(false);
-  };
-
-  const bringBoatToCenter = () => {
-    if (activeBoatOnMapId === null) {
-      console.log("No boat selected to bring back to center.");
-      return;
-    }
-  
-    // Update the position of the active boatOnMap to the center of the map
-    const newBoatsOnMap = boatsOnMap.map(boatOnMap =>
-      boatOnMap.boat_on_map_id === activeBoatOnMapId
-        ? { ...boatOnMap, x: mapWidth / 2, y: mapHeight / 2 }
-        : boatOnMap
-    );
-  
-    setBoatsOnMap(newBoatsOnMap);
-
-    // Save the updated boatOnMap position to the backend
-    const updatedBoatOnMap = newBoatsOnMap.find(boatOnMap => boatOnMap.boat_on_map_id === activeBoatOnMapId);
-    if (updatedBoatOnMap) {
-      saveBoatOnMap(updatedBoatOnMap);
-    }
-    console.log(`Boat on map with ID ${activeBoatOnMapId} brought back to center.`);
   };
   
   return (
@@ -264,8 +229,8 @@ function Map({ boatsOnMap, setBoatsOnMap, saveBoatOnMap, activeBoatOnMapId,  set
             min="1"
           />
         </label>
-        <button onClick={addNewBoat}>Add Boat to Map</button>
-        <button onClick={bringBoatToCenter}>Bring Boat Back to Center</button>
+        {/* <button onClick={addNewBoatOnMap}>Add Boat to Map</button> */}
+        {/* <button onClick={bringBoatToCenter}>Bring Boat Back to Center</button> */}
       </div>
       {showConfirmation && (
         <AreYouSure

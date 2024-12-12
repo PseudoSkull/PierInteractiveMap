@@ -7,6 +7,7 @@ import BoatForm from './components/BoatForm';
 import AreYouSure from './components/AreYouSure';
 import Header from './components/Header';
 import Map from './components/Map'; // Import the new Map component
+import Subheader from './components/Subheader';
 import './styles/App.css';
 
 function App() {
@@ -27,7 +28,9 @@ function App() {
   const [highlightedBoatId, setHighlightedBoatId] = useState(null);
   
   const [showConfirmation, setShowConfirmation] = useState(false); // Show or hide delete confirmation modal
-
+  const [unassignedOnlyMode, setAssignedOnlyMode] = useState(false);
+  const [selectedBoatOnMap, setSelectedBoatOnMap] = useState(null);
+  
   const API_URL = 'http://localhost:5000/boat_listings'; // Base URL for the boat listing API
 
   useEffect(() => {
@@ -223,6 +226,57 @@ function App() {
     }, 500); // Increased timeout to allow for smooth scrolling
   };
 
+  const addNewBoatOnMap = () => {
+    const newBoatOnMapId = boatsOnMap.length
+      ? Math.max(...boatsOnMap.map(boatOnMap => boatOnMap.boat_on_map_id)) + 1
+      : 1;
+
+    console.log('Adding new boat with ID:', newBoatOnMapId);
+
+    const newBoat = {
+      boat_on_map_id: newBoatOnMapId,
+      x: 200,
+      y: 200,
+      width: 100,
+      height: 50,
+      color: 'purple',
+      angle: 0,
+      border: null,
+    };
+
+    setBoatsOnMap([...boatsOnMap, newBoat]);
+
+    // Add new boat to the backend
+    axios.post('http://localhost:5000/boats-on-map', newBoat)
+      .then(() => console.log('New boat added to backend'))
+      .catch(error => console.error('Error adding new boat:', error));
+  };
+
+
+  const bringBoatToCenter = () => {
+    if (activeBoatOnMapId === null) {
+      console.log("No boat selected to bring back to center.");
+      return;
+    }
+  
+    // Update the position of the active boatOnMap to the center of the map
+    const newBoatsOnMap = boatsOnMap.map(boatOnMap =>
+      boatOnMap.boat_on_map_id === activeBoatOnMapId
+        ? { ...boatOnMap, x: mapWidth / 2, y: mapHeight / 2 }
+        : boatOnMap
+    );
+  
+    setBoatsOnMap(newBoatsOnMap);
+
+    // Save the updated boatOnMap position to the backend
+    const updatedBoatOnMap = newBoatsOnMap.find(boatOnMap => boatOnMap.boat_on_map_id === activeBoatOnMapId);
+    if (updatedBoatOnMap) {
+      saveBoatOnMap(updatedBoatOnMap);
+    }
+    console.log(`Boat on map with ID ${activeBoatOnMapId} brought back to center.`);
+  };
+
+
   const assignBoatListingToMap = (boatListing) => {
     if (!activeBoatOnMapId) {
       alert('No active boat selected on the map.');
@@ -246,20 +300,54 @@ function App() {
     });
   };  
   
+  const toggleAssignedOnlyMode = () => {
+    setAssignedOnlyMode(!unassignedOnlyMode);
+  };
+
+  const handleShowAssociatedBoat = (boatListing) => {
+    setFilteredBoatListings([boatListing]);
+    setCurrentPage(1);
+    updateTotalPages([boatListing]);
+  };
+
+  const filteredBoatsOnMap = unassignedOnlyMode
+    ? boatsOnMap.filter((boatOnMap) =>
+        boatListings.some((boatListing) => boatListing.boat_on_map_id !== boatOnMap.boat_on_map_id)
+      )
+    : boatsOnMap;
+
+  const filteredBoatListingsForDisplay = unassignedOnlyMode
+    ? filteredBoatListings.filter((boatListing) => boatListing.boat_on_map_id !== null)
+    : filteredBoatListings;
 
   return (
     <div className="app">
       <Header onSearch={handleSearch} onClear={handleClearSearch} />
+      <Subheader
+        addNewBoatOnMap={addNewBoatOnMap}
+        bringBoatToCenter={bringBoatToCenter}
+        toggleAssignedOnlyMode={toggleAssignedOnlyMode}
+        unassignedOnlyMode={unassignedOnlyMode}
+        selectedBoatOnMap={selectedBoatOnMap}
+        boatListings={boatListings}
+        onShowAssociatedBoat={handleShowAssociatedBoat}
+      />
       <div className="container">
         <div className="map-section">
           <Map
-            boatsOnMap={boatsOnMap}
+            boatsOnMap={filteredBoatsOnMap}
             setBoatsOnMap={setBoatsOnMap}
             saveBoatOnMap={saveBoatOnMap}
             activeBoatOnMapId={activeBoatOnMapId}
-            setActiveBoatOnMapId={setActiveBoatOnMapId}
+            setActiveBoatOnMapId={(boatOnMapId) => {
+              const boat = boatsOnMap.find((b) => b.boat_on_map_id === boatOnMapId);
+              setSelectedBoatOnMap(boat);
+              setActiveBoatOnMapId(boatOnMapId);
+            }}
             boatFindMode={boatFindMode}
             highlightedBoatId={highlightedBoatId}
+            addNewBoatOnMap={addNewBoatOnMap}
+            bringBoatToCenter={bringBoatToCenter}
           />
         </div>
         <div className="listing-section">
@@ -273,7 +361,7 @@ function App() {
             <button onClick={() => handlePageChange('next')} disabled={currentPage === totalPages}>{'->'}</button>
           </div>
           <BoatList
-            boatListings={currentBoatListings}
+            boatListings={filteredBoatListingsForDisplay}
             onEdit={openForm}
             onDelete={confirmDelete}
             boatsOnMap={boatsOnMap}
