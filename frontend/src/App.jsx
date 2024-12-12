@@ -326,10 +326,10 @@ function App() {
             saveBoatOnMap={saveBoatOnMap}
             activeBoatOnMapId={activeBoatOnMapId}
             setActiveBoatOnMapId={(boatOnMapId) => {
-              const boat = boatsOnMap.find((b) => b.boat_on_map_id !== boatOnMapId);
+              const boat = boatsOnMap.find((b) => b.boat_on_map_id === boatOnMapId);
               setSelectedBoatOnMap(boat);
               setActiveBoatOnMapId(boatOnMapId);
-            }}
+            }}            
             boatFindMode={boatFindMode}
             highlightedBoatId={highlightedBoatId}
             addNewBoatOnMap={addNewBoatOnMap}

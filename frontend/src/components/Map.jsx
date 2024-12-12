@@ -229,19 +229,6 @@ function Map({ boatsOnMap, setBoatsOnMap, saveBoatOnMap, activeBoatOnMapId,  set
           )}
         </Layer>
       </Stage>
-      <div className="menu">
-        <label>
-          Speed:
-          <input
-            type="number"
-            value={speed}
-            onChange={(e) => setSpeed(Number(e.target.value))}
-            min="1"
-          />
-        </label>
-        {/* <button onClick={addNewBoatOnMap}>Add Boat to Map</button> */}
-        {/* <button onClick={bringBoatToCenter}>Bring Boat Back to Center</button> */}
-      </div>
       {showConfirmation && (
         <AreYouSure
           message="Are you sure you want to delete this boat?"
