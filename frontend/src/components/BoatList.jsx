@@ -2,8 +2,12 @@
 
 import React from 'react';
 
-function BoatList({ boatListings, onEdit, onDelete, boatsOnMap, setBoatsOnMap, activeBoatOnMapId, assignBoatListingToMap, onViewBoat }) {
+function BoatList({ boatListings, onEdit, onDelete, boatsOnMap, setBoatsOnMap, activeBoatOnMapId, assignBoatListingToMap, onViewBoat, unassignedOnlyMode }) {
 
+  const filteredBoatListings = unassignedOnlyMode
+  ? boatListings.filter(boatListing => !boatListing.boat_on_map_id)
+  : boatListings;
+  
   if (!boatListings || boatListings.length === 0) {
     return <p>No boat listings available. Add a new boat to get started!</p>;
   }

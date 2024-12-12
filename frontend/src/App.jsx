@@ -26,11 +26,11 @@ function App() {
   const [activeBoatOnMapId, setActiveBoatOnMapId] = useState(null);
   const [boatFindMode, setBoatFindMode] = useState(false);
   const [highlightedBoatId, setHighlightedBoatId] = useState(null);
-  
+
   const [showConfirmation, setShowConfirmation] = useState(false); // Show or hide delete confirmation modal
   const [unassignedOnlyMode, setAssignedOnlyMode] = useState(false);
   const [selectedBoatOnMap, setSelectedBoatOnMap] = useState(null);
-  
+
   const API_URL = 'http://localhost:5000/boat_listings'; // Base URL for the boat listing API
 
   useEffect(() => {
@@ -47,7 +47,6 @@ function App() {
       })
       .catch(error => console.error('Error fetching boats:', error));
   };
-  
 
   const handleDelete = (boatListingId) => {
     axios
@@ -63,7 +62,6 @@ function App() {
       })
       .catch((error) => console.error('Error deleting boat listing:', error));
   };
-  
 
   const updateTotalPages = (filteredBoatListingsList) => {
     setTotalPages(Math.ceil(filteredBoatListingsList.length / boatListingsPerPage));
@@ -91,19 +89,18 @@ function App() {
     const boatToDelete = boatListings.find(
       (boatListing) => boatListing.boat_listing_id === boatListingId
     );
-  
+
     if (!boatToDelete) {
       console.error('Boat listing not found.');
       return;
     }
-  
+
     setShowConfirmation({
       message: `Are you sure you want to delete Boat Listing '${boatToDelete.name || 'Untitled'}'?`,
       onYes: () => handleDelete(boatListingId),
       onNo: () => setShowConfirmation(false),
     });
   };
-  
 
   const handleSave = (boatListing) => {
     const boatListingId = boatListing.boat_listing_id;
@@ -154,7 +151,6 @@ function App() {
       })
       .catch(error => console.error('Error clearing boats on map:', error));
   };
-  
 
   const handleClearSearch = () => {
     setFilteredBoatListings(boatListings);
@@ -167,7 +163,7 @@ function App() {
       .then(response => setBoatsOnMap(response.data.boats_on_map))
       .catch(error => console.error('Error loading boats-on-map data:', error));
   };
-  
+
   useEffect(() => {
     fetchBoatsOnMap();
   }, []);
@@ -187,7 +183,7 @@ function App() {
     const matchingBoatListings = boatListings.filter(
       (boatListing) => boatListing.boat_on_map_id === boatOnMapId
     );
-  
+
     if (matchingBoatListings.length > 0) {
       console.log(`Found ${matchingBoatListings.length} matching boat listing(s):`, matchingBoatListings);
       return matchingBoatListings;
@@ -200,38 +196,32 @@ function App() {
   const enterBoatFindMode = (boatListing) => {
     setBoatFindMode(true);
     setHighlightedBoatId(boatListing.boat_on_map_id);
-    
-    // Find the boat's position on the map
+
     const boat = boatsOnMap.find(boat => boat.boat_on_map_id === boatListing.boat_on_map_id);
     if (boat) {
-      // Get the map element's position
       const mapElement = document.querySelector('.map-canvas');
       if (mapElement) {
-        // Calculate scroll position based on boat's y position
         const mapRect = mapElement.getBoundingClientRect();
-        const scrollTo = mapRect.top + boat.y - (window.innerHeight / 3); // Position boat 1/3 from top
-        
-        // Smooth scroll to the boat
+        const scrollTo = mapRect.top + boat.y - (window.innerHeight / 3);
+
         window.scrollTo({
           top: scrollTo,
-          behavior: 'smooth'
+          behavior: 'smooth',
         });
       }
     }
-    
+
     setTimeout(() => {
       alert(`This is where the boat for ${boatListing.name || 'Untitled'} is`);
       setBoatFindMode(false);
       setHighlightedBoatId(null);
-    }, 500); // Increased timeout to allow for smooth scrolling
+    }, 500);
   };
 
   const addNewBoatOnMap = () => {
     const newBoatOnMapId = boatsOnMap.length
       ? Math.max(...boatsOnMap.map(boatOnMap => boatOnMap.boat_on_map_id)) + 1
       : 1;
-
-    console.log('Adding new boat with ID:', newBoatOnMapId);
 
     const newBoat = {
       boat_on_map_id: newBoatOnMapId,
@@ -246,29 +236,25 @@ function App() {
 
     setBoatsOnMap([...boatsOnMap, newBoat]);
 
-    // Add new boat to the backend
     axios.post('http://localhost:5000/boats-on-map', newBoat)
       .then(() => console.log('New boat added to backend'))
       .catch(error => console.error('Error adding new boat:', error));
   };
-
 
   const bringBoatToCenter = () => {
     if (activeBoatOnMapId === null) {
       console.log("No boat selected to bring back to center.");
       return;
     }
-  
-    // Update the position of the active boatOnMap to the center of the map
+
     const newBoatsOnMap = boatsOnMap.map(boatOnMap =>
       boatOnMap.boat_on_map_id === activeBoatOnMapId
-        ? { ...boatOnMap, x: mapWidth / 2, y: mapHeight / 2 }
+        ? { ...boatOnMap, x: 200, y: 200 } // Adjusted for map center
         : boatOnMap
     );
-  
+
     setBoatsOnMap(newBoatsOnMap);
 
-    // Save the updated boatOnMap position to the backend
     const updatedBoatOnMap = newBoatsOnMap.find(boatOnMap => boatOnMap.boat_on_map_id === activeBoatOnMapId);
     if (updatedBoatOnMap) {
       saveBoatOnMap(updatedBoatOnMap);
@@ -276,30 +262,28 @@ function App() {
     console.log(`Boat on map with ID ${activeBoatOnMapId} brought back to center.`);
   };
 
-
   const assignBoatListingToMap = (boatListing) => {
     if (!activeBoatOnMapId) {
       alert('No active boat selected on the map.');
       return;
     }
-  
+
     setShowConfirmation({
       message: `Assign this map selection to Boat Listing ‘${boatListing.name || 'Untitled'}’?`,
       onYes: () => {
         const updatedBoatListing = { ...boatListing, boat_on_map_id: activeBoatOnMapId };
-        console.log("Here's your updated boat listing:", updatedBoatListing);
         axios
           .put(`${API_URL}/${boatListing.boat_listing_id}`, updatedBoatListing)
           .then(() => {
-            fetchAllBoatListings(); // Refresh data after update
-            setShowConfirmation(false); // Close modal
+            fetchAllBoatListings();
+            setShowConfirmation(false);
           })
           .catch((error) => console.error('Error assigning boat listing to map:', error));
       },
       onNo: () => setShowConfirmation(false),
     });
-  };  
-  
+  };
+
   const toggleAssignedOnlyMode = () => {
     setAssignedOnlyMode(!unassignedOnlyMode);
   };
@@ -312,12 +296,14 @@ function App() {
 
   const filteredBoatsOnMap = unassignedOnlyMode
     ? boatsOnMap.filter((boatOnMap) =>
-        boatListings.some((boatListing) => boatListing.boat_on_map_id !== boatOnMap.boat_on_map_id)
+        !boatListings.some(
+          (boatListing) => boatListing.boat_on_map_id === boatOnMap.boat_on_map_id
+        )
       )
     : boatsOnMap;
 
   const filteredBoatListingsForDisplay = unassignedOnlyMode
-    ? filteredBoatListings.filter((boatListing) => boatListing.boat_on_map_id !== null)
+    ? filteredBoatListings.filter((boatListing) => boatListing.boat_on_map_id === null)
     : filteredBoatListings;
 
   return (
@@ -340,7 +326,7 @@ function App() {
             saveBoatOnMap={saveBoatOnMap}
             activeBoatOnMapId={activeBoatOnMapId}
             setActiveBoatOnMapId={(boatOnMapId) => {
-              const boat = boatsOnMap.find((b) => b.boat_on_map_id === boatOnMapId);
+              const boat = boatsOnMap.find((b) => b.boat_on_map_id !== boatOnMapId);
               setSelectedBoatOnMap(boat);
               setActiveBoatOnMapId(boatOnMapId);
             }}

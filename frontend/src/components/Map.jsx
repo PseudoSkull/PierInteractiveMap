@@ -7,7 +7,7 @@ import axios from 'axios';
 import AreYouSure from './AreYouSure'; // Import AreYouSure component
 import './../styles/Map.css'; // Ensure you have basic styles
 
-function Map({ boatsOnMap, setBoatsOnMap, saveBoatOnMap, activeBoatOnMapId,  setActiveBoatOnMapId, boatFindMode, highlightedBoatId }) {
+function Map({ boatsOnMap, setBoatsOnMap, saveBoatOnMap, activeBoatOnMapId,  setActiveBoatOnMapId, boatFindMode, highlightedBoatId, unassignedOnlyMode }) {
   const [isDragging, setIsDragging] = useState(false);
   const [speed, setSpeed] = useState(5);
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -24,6 +24,16 @@ function Map({ boatsOnMap, setBoatsOnMap, saveBoatOnMap, activeBoatOnMapId,  set
   const maxDown = mapHeight - 25;
   const maxLeft = 75;
   const maxRight = mapWidth - 230;
+
+   // Filter boats on the map
+   const filteredBoatsOnMap = unassignedOnlyMode
+   ? boatsOnMap.filter(
+       (boatOnMap) =>
+         !boatListings.some(
+           (boatListing) => boatListing.boat_on_map_id === boatOnMap.boat_on_map_id
+         )
+     )
+   : boatsOnMap;
 
   const isEditingInput = () => {
     const activeElement = document.activeElement;
