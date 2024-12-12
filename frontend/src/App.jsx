@@ -23,6 +23,8 @@ function App() {
   // Map-related
   const [boatsOnMap, setBoatsOnMap] = useState([]); // All boats (for the map) fetched from the backend
   const [activeBoatOnMapId, setActiveBoatOnMapId] = useState(null);
+  const [boatFindMode, setBoatFindMode] = useState(false);
+  const [highlightedBoatId, setHighlightedBoatId] = useState(null);
   
   const [showConfirmation, setShowConfirmation] = useState(false); // Show or hide delete confirmation modal
 
@@ -42,6 +44,7 @@ function App() {
       })
       .catch(error => console.error('Error fetching boats:', error));
   };
+  
 
   const handleDelete = (boatListingId) => {
     axios
@@ -191,6 +194,15 @@ function App() {
     }
   };
 
+  const enterBoatFindMode = (boatListing) => {
+    setBoatFindMode(true);
+    setHighlightedBoatId(boatListing.boat_on_map_id);
+    alert(`This is where the boat for ${boatListing.name || 'Untitled'} is`);
+    // After alert is dismissed, exit find mode
+    setBoatFindMode(false);
+    setHighlightedBoatId(null);
+  };
+
   const assignBoatListingToMap = (boatListing) => {
     if (!activeBoatOnMapId) {
       alert('No active boat selected on the map.');
@@ -226,6 +238,8 @@ function App() {
             saveBoatOnMap={saveBoatOnMap}
             activeBoatOnMapId={activeBoatOnMapId}
             setActiveBoatOnMapId={setActiveBoatOnMapId}
+            boatFindMode={boatFindMode}
+            highlightedBoatId={highlightedBoatId}
           />
         </div>
         <div className="listing-section">
@@ -246,6 +260,7 @@ function App() {
             setBoatsOnMap={setBoatsOnMap}
             activeBoatOnMapId={activeBoatOnMapId}
             assignBoatListingToMap={assignBoatListingToMap}
+            onViewBoat={enterBoatFindMode}
           />
         </div>
       </div>

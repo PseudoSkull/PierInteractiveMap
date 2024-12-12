@@ -7,7 +7,7 @@ import axios from 'axios';
 import AreYouSure from './AreYouSure'; // Import AreYouSure component
 import './../styles/Map.css'; // Ensure you have basic styles
 
-function Map({ boatsOnMap, setBoatsOnMap, saveBoatOnMap, activeBoatOnMapId, setActiveBoatOnMapId }) {
+function Map({ boatsOnMap, setBoatsOnMap, saveBoatOnMap, activeBoatOnMapId,  setActiveBoatOnMapId, boatFindMode, highlightedBoatId }) {
   const [isDragging, setIsDragging] = useState(false);
   const [speed, setSpeed] = useState(5);
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -236,6 +236,9 @@ function Map({ boatsOnMap, setBoatsOnMap, saveBoatOnMap, activeBoatOnMapId, setA
               onDragEnd={(e) => handleDragEnd(e, boatOnMap.boat_on_map_id)}
               stroke="black"
               strokeWidth={1}
+              opacity={boatFindMode ? 
+                (boatOnMap.boat_on_map_id === highlightedBoatId ? 1 : 0) 
+                : 1}
             />
           ))}
           {scaleImage && (

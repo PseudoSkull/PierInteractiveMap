@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-function BoatList({ boatListings, onEdit, onDelete, boatsOnMap, setBoatsOnMap, activeBoatOnMapId, assignBoatListingToMap }) {
+function BoatList({ boatListings, onEdit, onDelete, boatsOnMap, setBoatsOnMap, activeBoatOnMapId, assignBoatListingToMap, onViewBoat }) {
 
   if (!boatListings || boatListings.length === 0) {
     return <p>No boat listings available. Add a new boat to get started!</p>;
@@ -34,7 +34,7 @@ function BoatList({ boatListings, onEdit, onDelete, boatsOnMap, setBoatsOnMap, a
             <button onClick={() => onEdit(boatListing)} style={{ marginRight: '10px' }}>Info</button>
             <button onClick={() => onDelete(boatListing.boat_listing_id)}>Delete</button>
             {boatListing.boat_on_map_id ? (
-              <button>View Boat on Map</button>
+              <button onClick={() => onViewBoat(boatListing)}>View Boat on Map</button>
             ) : (
               <button onClick={() => assignBoatListingToMap(boatListing)}>Unassigned</button>
             )}
