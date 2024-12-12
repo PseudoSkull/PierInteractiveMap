@@ -197,10 +197,14 @@ function App() {
   const enterBoatFindMode = (boatListing) => {
     setBoatFindMode(true);
     setHighlightedBoatId(boatListing.boat_on_map_id);
-    alert(`This is where the boat for ${boatListing.name || 'Untitled'} is`);
-    // After alert is dismissed, exit find mode
-    setBoatFindMode(false);
-    setHighlightedBoatId(null);
+    
+    // Show alert and wait for it to be dismissed
+    setTimeout(() => {
+      alert(`This is where the boat for ${boatListing.name || 'Untitled'} is`);
+      // Only exit find mode after alert is dismissed
+      setBoatFindMode(false);
+      setHighlightedBoatId(null);
+    }, 100);
   };
 
   const assignBoatListingToMap = (boatListing) => {
