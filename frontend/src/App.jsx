@@ -198,13 +198,29 @@ function App() {
     setBoatFindMode(true);
     setHighlightedBoatId(boatListing.boat_on_map_id);
     
-    // Show alert and wait for it to be dismissed
+    // Find the boat's position on the map
+    const boat = boatsOnMap.find(boat => boat.boat_on_map_id === boatListing.boat_on_map_id);
+    if (boat) {
+      // Get the map element's position
+      const mapElement = document.querySelector('.map-canvas');
+      if (mapElement) {
+        // Calculate scroll position based on boat's y position
+        const mapRect = mapElement.getBoundingClientRect();
+        const scrollTo = mapRect.top + boat.y - (window.innerHeight / 3); // Position boat 1/3 from top
+        
+        // Smooth scroll to the boat
+        window.scrollTo({
+          top: scrollTo,
+          behavior: 'smooth'
+        });
+      }
+    }
+    
     setTimeout(() => {
       alert(`This is where the boat for ${boatListing.name || 'Untitled'} is`);
-      // Only exit find mode after alert is dismissed
       setBoatFindMode(false);
       setHighlightedBoatId(null);
-    }, 100);
+    }, 500); // Increased timeout to allow for smooth scrolling
   };
 
   const assignBoatListingToMap = (boatListing) => {
