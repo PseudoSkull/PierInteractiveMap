@@ -36,7 +36,7 @@ class BoatListing(db.Model):
     mapped = db.Column(db.Boolean, default=False)
     customer_name = db.Column(db.String(100))
     vehicle_type = db.Column(db.String(50))
-    boat_on_map_id = db.Column(db.Integer, nullable=True)  # Informational reference
+    boat_on_map_id = db.Column(db.Integer, nullable=True)
 
     def to_dict(self):
         return {column.key: getattr(self, column.key) for column in inspect(self).mapper.column_attrs}

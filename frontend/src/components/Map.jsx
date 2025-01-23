@@ -11,7 +11,16 @@ function Map({ boatsOnMap, setBoatsOnMap, saveBoatOnMap, activeBoatOnMapId,  set
   const [isDragging, setIsDragging] = useState(false);
   const [speed, setSpeed] = useState(5);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const colorOptions = ['blue', 'red', 'purple', 'pink', 'green'];
+  const colorOptions = [
+    'blue',
+    'red',
+    'purple',
+    'pink',
+    'green',
+    'yellow',
+    'orange'
+  ];
+
   const [colorIndex, setColorIndex] = useState(0);
   const [mapImage] = useImage('/map_for_inkscape.svg');
   const [scaleImage] = useImage('/scale.png');

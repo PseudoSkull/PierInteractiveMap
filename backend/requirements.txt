@@ -1,0 +1,7 @@
+# Python 3.11.3
+Flask
+Flask-CORS
+Flask-SQLAlchemy
+Flask-Migrate
+SQLAlchemy
+python-dotenv
