@@ -64,16 +64,20 @@ function App() {
   };
 
   const updateTotalPages = (filteredBoatListingsList) => {
-    setTotalPages(Math.ceil(filteredBoatListingsList.length / boatListingsPerPage));
-  };
+    const pages = Math.max(1, Math.ceil(filteredBoatListingsList.length / boatListingsPerPage));
+    setTotalPages(pages);
+  };  
 
   const handlePageChange = (direction) => {
-    if (direction === 'next' && currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
-    } else if (direction === 'prev' && currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
-  };
+    setCurrentPage(prevPage => {
+      if (direction === 'next' && prevPage < totalPages) {
+        return prevPage + 1;
+      } else if (direction === 'prev' && prevPage > 1) {
+        return prevPage - 1;
+      }
+      return prevPage;
+    });
+  };  
 
   const openForm = (boat = null) => {
     setSelectedBoatListing(boat);
@@ -302,9 +306,14 @@ function App() {
       )
     : boatsOnMap;
 
-  const filteredBoatListingsForDisplay = unassignedOnlyMode
+  const filteredBoatListingsForDisplay = (unassignedOnlyMode
     ? filteredBoatListings.filter((boatListing) => boatListing.boat_on_map_id === null)
-    : filteredBoatListings;
+    : filteredBoatListings
+  ).slice(
+    (currentPage - 1) * boatListingsPerPage,
+    currentPage * boatListingsPerPage
+  );
+    
 
   return (
     <div className="app">

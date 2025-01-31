@@ -7,6 +7,7 @@ from config.config import WEB_HOST_OF_APP, PORT_OF_MAP_FRONTEND
 import logging
 from flask_migrate import Migrate
 from sqlalchemy.inspection import inspect
+from env_variables import SUPABASE_DATABASE_PASSWORD, SUPABASE_APP_ID, SUPABASE_JWT_SECRET
 
 # Initialize Flask-Migrate
 
@@ -19,7 +20,8 @@ cors = CORS(app, resources={r"/*":
     {"origins": ALLOWED_CORS_ORIGINS}},
             supports_credentials=True)  # For CORS, needed only in development
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://postgres.{SUPABASE_APP_ID}:{SUPABASE_DATABASE_PASSWORD}@aws-0-ca-central-1.pooler.supabase.com:6543/postgres"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
@@ -167,11 +169,5 @@ def delete_boat_on_map(id):
 
 
 if __name__ == "__main__":
-    # Set the logging level
-    with app.app_context():
-        boat_listings = BoatListing.query.all()
-        print("THESE ARE THE BOATS")
-        for boat_listing in boat_listings:
-            print(boat_listing.to_dict())
     logging.basicConfig(level=logging.DEBUG)
     app.run(debug=True)

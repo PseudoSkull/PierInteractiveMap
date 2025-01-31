@@ -1,7 +1,19 @@
-# Python 3.11.3
+# Flask framework and extensions
 Flask
-Flask-CORS
 Flask-SQLAlchemy
-Flask-Migrate
+Flask-CORS
+flask_migrate
+
+# Other database
 SQLAlchemy
+
+# Requests library for making HTTP requests
+requests
+
+# Date and time handling
+pytz
+
+# To use env variables
 python-dotenv
+PyJWT==2.8.0
+psycopg2==2.9.10
