@@ -1,7 +1,6 @@
 // ./MainCode.jsx
 
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import Cookies from 'js-cookie';
 import BoatList from './components/BoatList';
 import BoatForm from './components/BoatForm';
@@ -201,21 +200,58 @@ function MainCode({ session, supabase, appBackendHost, appBackendPort }) {
     updateTotalPages(boatListings);
   };
 
-  const fetchBoatsOnMap = () => {
-    axios.get(`${backendURLPrefix}/boats-on-map`)
-      .then(response => setBoatsOnMap(response.data.boats_on_map))
-      .catch(error => console.error('Error loading boats-on-map data:', error));
+  const fetchBoatsOnMap = async () => {
+    const sessionCookie = Cookies.get('supabase-session');
+    console.log(sessionCookie);
+  
+    try {
+      const response = await fetch(`${backendURLPrefix}/boats-on-map`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${JSON.parse(sessionCookie).access_token}`
+        }
+      });
+  
+      if (response.ok) {
+        const data = await response.json();
+        setBoatsOnMap(data.boats_on_map);
+      } else {
+        console.error('Error loading boats-on-map data');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
   };
+  
 
   useEffect(() => {
     fetchBoatsOnMap();
   }, []);
 
-  const saveBoatOnMap = (updatedBoatOnMap) => {
-    axios.put(`${backendURLPrefix}/boats-on-map/${updatedBoatOnMap.boat_on_map_id}`, updatedBoatOnMap)
-      .then(() => console.log('BoatOnMap updated successfully'))
-      .catch(error => console.error('Error saving boatOnMap data:', error));
-  };
+  const saveBoatOnMap = async (updatedBoatOnMap) => {
+    const sessionCookie = Cookies.get('supabase-session');
+    console.log(sessionCookie);
+  
+    try {
+      const response = await fetch(`${backendURLPrefix}/boats-on-map/${updatedBoatOnMap.boat_on_map_id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${JSON.parse(sessionCookie).access_token}`
+        },
+        body: JSON.stringify(updatedBoatOnMap)
+      });
+  
+      if (response.ok) {
+        console.log('BoatOnMap updated successfully');
+      } else {
+        console.error('Error saving boatOnMap data');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };  
 
   const currentBoatListings = filteredBoatListings.slice(
     (currentPage - 1) * boatListingsPerPage,
@@ -261,11 +297,14 @@ function MainCode({ session, supabase, appBackendHost, appBackendPort }) {
     }, 500);
   };
 
-  const addNewBoatOnMap = () => {
+  const addNewBoatOnMap = async () => {
+    const sessionCookie = Cookies.get('supabase-session');
+    console.log(sessionCookie);
+  
     const newBoatOnMapId = boatsOnMap.length
       ? Math.max(...boatsOnMap.map(boatOnMap => boatOnMap.boat_on_map_id)) + 1
       : 1;
-
+  
     const newBoat = {
       boat_on_map_id: newBoatOnMapId,
       x: 200,
@@ -276,13 +315,28 @@ function MainCode({ session, supabase, appBackendHost, appBackendPort }) {
       angle: 0,
       border: null,
     };
-
+  
     setBoatsOnMap([...boatsOnMap, newBoat]);
-
-    axios.post(`${backendURLPrefix}/boats-on-map`, newBoat)
-      .then(() => console.log('New boat added to backend'))
-      .catch(error => console.error('Error adding new boat:', error));
-  };
+  
+    try {
+      const response = await fetch(`${backendURLPrefix}/boats-on-map`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${JSON.parse(sessionCookie).access_token}`
+        },
+        body: JSON.stringify(newBoat)
+      });
+  
+      if (response.ok) {
+        console.log('New boat added to backend');
+      } else {
+        console.error('Error adding new boat');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };  
 
   const bringBoatToCenter = () => {
     if (activeBoatOnMapId === null) {

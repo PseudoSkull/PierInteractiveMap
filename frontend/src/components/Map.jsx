@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Stage, Layer, Ellipse, Image } from 'react-konva';
 import useImage from 'use-image';
-import axios from 'axios';
+import Cookies from 'js-cookie';
 import AreYouSure from './AreYouSure'; // Import AreYouSure component
 import './../styles/Map.css'; // Ensure you have basic styles
 
@@ -183,18 +183,34 @@ function Map({ boatsOnMap, setBoatsOnMap, saveBoatOnMap, activeBoatOnMapId,  set
     setScalePosition({ x: newX, y: newY });
   };
 
-  const confirmDeletion = () => {
+  const confirmDeletion = async () => {
+    const sessionCookie = Cookies.get('supabase-session');
+    console.log(sessionCookie);
+  
     const boatOnMapToDelete = boatsOnMap.find(boatOnMap => boatOnMap.boat_on_map_id === activeBoatOnMapId);
     if (!boatOnMapToDelete) return;
-
-    axios.delete(`${backendURLPrefix}/boats-on-map/${activeBoatOnMapId}`)
-      .then(() => {
+  
+    try {
+      const response = await fetch(`${backendURLPrefix}/boats-on-map/${activeBoatOnMapId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${JSON.parse(sessionCookie).access_token}`
+        }
+      });
+  
+      if (response.ok) {
         setBoatsOnMap(boatsOnMap.filter(boatOnMap => boatOnMap.boat_on_map_id !== activeBoatOnMapId));
         setActiveBoatOnMapId(null);
         setShowConfirmation(false);
-      })
-      .catch(error => console.error('Error deleting boat:', error));
+      } else {
+        console.error('Error deleting boat');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
   };
+  
 
   const cancelDeletion = () => {
     setShowConfirmation(false);
