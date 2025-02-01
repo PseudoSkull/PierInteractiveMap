@@ -8,11 +8,18 @@ import logging
 from flask_migrate import Migrate
 from sqlalchemy.inspection import inspect
 from env_variables import SUPABASE_DATABASE_PASSWORD, SUPABASE_APP_ID, SUPABASE_JWT_SECRET
+import jwt
+from jwt import ExpiredSignatureError, InvalidTokenError
 
 # Initialize Flask-Migrate
 
+if PORT_OF_MAP_FRONTEND != "":
+    colon = ":"
+else:
+    colon = ""
+
 ALLOWED_CORS_ORIGINS = [
-    f"http://{WEB_HOST_OF_APP}:{PORT_OF_MAP_FRONTEND}",
+    f"http://{WEB_HOST_OF_APP}{colon}{PORT_OF_MAP_FRONTEND}",
 ]
 
 app = Flask(__name__)
@@ -26,6 +33,48 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
+def validate_jwt(token):
+    """
+    Validate the JWT using the Supabase secret.
+    """
+    print(token)
+    try:
+        decoded = jwt.decode(
+            token,
+            SUPABASE_JWT_SECRET,
+            algorithms=["HS256"],  # Use the appropriate algorithm
+            audience="authenticated"  # Matches the 'aud' claim in the token
+        )
+        return decoded
+    except ExpiredSignatureError:
+        print("Expired token")
+        return None
+        # return {"error": "Token has expired"}
+    except InvalidTokenError:
+        return "Invalid token"
+        # return {"error": "Invalid token"}
+
+# Authentication function
+def authenticate_request():
+    # Retrieve the 'Authorization' header
+    auth_header = request.headers.get('Authorization')
+
+    if not auth_header or not auth_header.startswith('Bearer '):
+        return jsonify({'error': 'Authorization header missing or malformed'}), 401
+
+    # Extract the token from the 'Bearer' prefix
+    token = auth_header.split(' ')[1]
+
+    # Validate the JWT
+    decoded_session = validate_jwt(token)
+    if decoded_session == "Invalid token":
+        return jsonify({'error': 'Invalid JWT'}), 401
+    elif decoded_session == "Expired token":
+        return jsonify({'error': 'Expired JWT'}), 401
+    if not decoded_session:
+        return jsonify({'error': 'An unknown auth error occurred'}), 401
+
+    return True  # Authentication successful
 
 class BoatListing(db.Model):
     boat_listing_id = db.Column(db.Integer, primary_key=True)
@@ -76,6 +125,10 @@ with app.app_context():
 
 @app.route('/boat_listings', methods=['GET'])
 def get_boat_listings():
+    auth_result = authenticate_request()
+    if auth_result is not True:
+        return auth_result
+    
     boat_listings = BoatListing.query.all()
     return jsonify({
         "boat_listings": [boat_listing.to_dict() for boat_listing in boat_listings],
@@ -83,6 +136,10 @@ def get_boat_listings():
 
 @app.route('/boat_listings', methods=['POST'])
 def create_boat():
+    auth_result = authenticate_request()
+    if auth_result is not True:
+        return auth_result
+    
     data = request.json
     new_boat = BoatListing(
         size=data['size'],
@@ -101,6 +158,10 @@ def create_boat():
 
 @app.route('/boat_listings/<int:boat_id>', methods=['PUT'])
 def update_boat_listing(boat_id):
+    auth_result = authenticate_request()
+    if auth_result is not True:
+        return auth_result
+    
     data = request.json
     boat_listing = BoatListing.query.get_or_404(boat_id)
     boat_listing.size = data['size']
@@ -118,6 +179,10 @@ def update_boat_listing(boat_id):
 
 @app.route('/boat_listings/<int:boat_id>', methods=['DELETE'])
 def delete_boat_listing(boat_id):
+    auth_result = authenticate_request()
+    if auth_result is not True:
+        return auth_result
+    
     boat = BoatListing.query.get_or_404(boat_id)
     db.session.delete(boat)
     db.session.commit()
@@ -126,6 +191,10 @@ def delete_boat_listing(boat_id):
 
 @app.route('/boats-on-map', methods=['GET'])
 def get_boats_on_map():
+    auth_result = authenticate_request()
+    if auth_result is not True:
+        return auth_result
+    
     boats_on_map = BoatOnMap.query.all()
     return jsonify({
         "boats_on_map": [boat_on_map.to_dict() for boat_on_map in boats_on_map],
@@ -133,6 +202,10 @@ def get_boats_on_map():
 
 @app.route('/boats-on-map', methods=['POST'])
 def create_boat_on_map():
+    auth_result = authenticate_request()
+    if auth_result is not True:
+        return auth_result
+    
     data = request.json
     new_boat_on_map = BoatOnMap(
         boat_on_map_id=data.get('boat_on_map_id'),
@@ -149,6 +222,10 @@ def create_boat_on_map():
 
 @app.route('/boats-on-map/<int:id>', methods=['PUT'])
 def update_boat_on_map(id):
+    auth_result = authenticate_request()
+    if auth_result is not True:
+        return auth_result
+    
     data = request.json
     boat_on_map = BoatOnMap.query.get_or_404(id)
     boat_on_map.x = data['x']
@@ -162,6 +239,10 @@ def update_boat_on_map(id):
 
 @app.route('/boats-on-map/<int:id>', methods=['DELETE'])
 def delete_boat_on_map(id):
+    auth_result = authenticate_request()
+    if auth_result is not True:
+        return auth_result
+    
     boat_on_map = BoatOnMap.query.get_or_404(id)
     db.session.delete(boat_on_map)
     db.session.commit()
