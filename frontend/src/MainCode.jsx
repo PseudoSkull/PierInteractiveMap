@@ -11,8 +11,14 @@ import Map from './components/Map'; // Import the new Map component
 import Subheader from './components/Subheader';
 import './styles/App.css';
 
-function MainCode({ session, supabase }) {
+function MainCode({ session, supabase, appBackendHost, appBackendPort }) {
   // List-related
+
+  const backendURLPrefix = appBackendPort
+    ? `http://${appBackendHost}:${appBackendPort}`
+    : `https://${appBackendHost}`;
+  
+  const boatListingsURL = `${backendURLPrefix}/boat_listings`; // Base URL for the boat listing API
   const [boatListings, setBoatListings] = useState([]); // All boats (for the list) fetched from the backend
   const [filteredBoatListings, setFilteredBoatListings] = useState([]); // Boats displayed after filtering or search
   const [currentPage, setCurrentPage] = useState(1); // Current page for pagination
@@ -20,7 +26,7 @@ function MainCode({ session, supabase }) {
   const [totalPages, setTotalPages] = useState(1); // Total pages available
   const [selectedBoatListing, setSelectedBoatListing] = useState(null); // Boat selected for editing or viewing
   const [showForm, setShowForm] = useState(false); // Show or hide boat form modal
-  const [deleteBoatListingId, setDeleteBoatListingId] = useState(null); // ID of the boat to be deleted
+  // const [deleteBoatListingId, setDeleteBoatListingId] = useState(null); // ID of the boat to be deleted
 
   // Map-related
   const [boatsOnMap, setBoatsOnMap] = useState([]); // All boats (for the map) fetched from the backend
@@ -32,8 +38,6 @@ function MainCode({ session, supabase }) {
   const [unassignedOnlyMode, setAssignedOnlyMode] = useState(false);
   const [selectedBoatOnMap, setSelectedBoatOnMap] = useState(null);
 
-  const API_URL = 'http://localhost:5000/boat_listings'; // Base URL for the boat listing API
-
   useEffect(() => {
     fetchAllBoatListings();
   }, []);
@@ -42,10 +46,10 @@ function MainCode({ session, supabase }) {
     try {
       const sessionCookie = Cookies.get('supabase-session');
   
-      const response = await fetch(API_URL, {
+      const response = await fetch(boatListingsURL, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${JSON.parse(sessionCookie).access_token}`,
           'Content-Type': 'application/json',
         },
         credentials: 'include'
@@ -71,7 +75,7 @@ function MainCode({ session, supabase }) {
     console.log(sessionCookie);
   
     try {
-      const response = await fetch(`${API_URL}/${boatListingId}`, {
+      const response = await fetch(`${boatListingsURL}/${boatListingId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -146,7 +150,7 @@ function MainCode({ session, supabase }) {
   
     try {
       const response = await fetch(
-        boatListingId ? `${API_URL}/${boatListingId}` : API_URL,
+        boatListingId ? `${boatListingsURL}/${boatListingId}` : boatListingsURL,
         {
           method: boatListingId ? 'PUT' : 'POST',
           headers: {
@@ -191,13 +195,13 @@ function MainCode({ session, supabase }) {
     updateTotalPages(filtered);
   };
 
-  const clearAllBoatData = () => {
-    axios.delete('http://localhost:5000/boats-on-map/clear')
-      .then(() => {
-        setBoatsOnMap([{ id: 1, x: 200, y: 200, width: 100, height: 50, color: 'purple', angle: 0 }]);
-      })
-      .catch(error => console.error('Error clearing boats on map:', error));
-  };
+  // const clearAllBoatData = () => {
+  //   axios.delete('http://localhost:5000/boats-on-map/clear')
+  //     .then(() => {
+  //       setBoatsOnMap([{ id: 1, x: 200, y: 200, width: 100, height: 50, color: 'purple', angle: 0 }]);
+  //     })
+  //     .catch(error => console.error('Error clearing boats on map:', error));
+  // };
 
   const handleClearSearch = () => {
     setFilteredBoatListings(boatListings);
@@ -314,22 +318,38 @@ function MainCode({ session, supabase }) {
       alert('No active boat selected on the map.');
       return;
     }
-
+  
     setShowConfirmation({
       message: `Assign this map selection to Boat Listing ‘${boatListing.name || 'Untitled'}’?`,
-      onYes: () => {
+      onYes: async () => {
+        const sessionCookie = Cookies.get('supabase-session');
+        console.log(sessionCookie);
+  
         const updatedBoatListing = { ...boatListing, boat_on_map_id: activeBoatOnMapId };
-        axios
-          .put(`${API_URL}/${boatListing.boat_listing_id}`, updatedBoatListing)
-          .then(() => {
+  
+        try {
+          const response = await fetch(`${boatListingsURL}/${boatListing.boat_listing_id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${JSON.parse(sessionCookie).access_token}`
+            },
+            body: JSON.stringify(updatedBoatListing)
+          });
+  
+          if (response.ok) {
             fetchAllBoatListings();
             setShowConfirmation(false);
-          })
-          .catch((error) => console.error('Error assigning boat listing to map:', error));
+          } else {
+            console.error('Error assigning boat listing to map');
+          }
+        } catch (error) {
+          console.error('Error:', error);
+        }
       },
       onNo: () => setShowConfirmation(false),
     });
-  };
+  };  
 
   const toggleAssignedOnlyMode = () => {
     setAssignedOnlyMode(!unassignedOnlyMode);
@@ -373,6 +393,7 @@ function MainCode({ session, supabase }) {
       <div className="container">
         <div className="map-section">
           <Map
+            backendURLPrefix={backendURLPrefix}
             boatsOnMap={filteredBoatsOnMap}
             setBoatsOnMap={setBoatsOnMap}
             saveBoatOnMap={saveBoatOnMap}

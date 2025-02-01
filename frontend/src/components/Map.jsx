@@ -7,7 +7,7 @@ import axios from 'axios';
 import AreYouSure from './AreYouSure'; // Import AreYouSure component
 import './../styles/Map.css'; // Ensure you have basic styles
 
-function Map({ boatsOnMap, setBoatsOnMap, saveBoatOnMap, activeBoatOnMapId,  setActiveBoatOnMapId, boatFindMode, highlightedBoatId, unassignedOnlyMode }) {
+function Map({ boatsOnMap, setBoatsOnMap, saveBoatOnMap, activeBoatOnMapId,  setActiveBoatOnMapId, boatFindMode, highlightedBoatId, unassignedOnlyMode, backendURLPrefix }) {
   const [isDragging, setIsDragging] = useState(false);
   const [speed, setSpeed] = useState(5);
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -187,7 +187,7 @@ function Map({ boatsOnMap, setBoatsOnMap, saveBoatOnMap, activeBoatOnMapId,  set
     const boatOnMapToDelete = boatsOnMap.find(boatOnMap => boatOnMap.boat_on_map_id === activeBoatOnMapId);
     if (!boatOnMapToDelete) return;
 
-    axios.delete(`http://localhost:5000/boats-on-map/${activeBoatOnMapId}`)
+    axios.delete(`${backendURLPrefix}/boats-on-map/${activeBoatOnMapId}`)
       .then(() => {
         setBoatsOnMap(boatsOnMap.filter(boatOnMap => boatOnMap.boat_on_map_id !== activeBoatOnMapId));
         setActiveBoatOnMapId(null);

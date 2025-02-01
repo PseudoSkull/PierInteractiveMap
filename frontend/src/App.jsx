@@ -13,8 +13,8 @@ import React, { useEffect, useState } from 'react';
 
 const supabaseUrl = import.meta.env.VITE_REACT_APP_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_REACT_APP_ANON_KEY;
-const appBackendHost = import.meta.env.VITE_BHQA_BACKEND_HOST;
-const appBackendPort = import.meta.env.VITE_BHQA_BACKEND_PORT;
+const appBackendHost = import.meta.env.VITE_PIER_BACKEND_HOST;
+const appBackendPort = import.meta.env.VITE_PIER_BACKEND_PORT;
 
 const supabase = createClient(
     supabaseUrl,
@@ -65,6 +65,8 @@ function App() {
       <MainCode
         session={session}
         supabase={supabase}
+        appBackendHost={appBackendHost}
+        appBackendPort={appBackendPort}
       />
     </div>
   )
