@@ -138,24 +138,35 @@ function MainCode({ session, supabase }) {
     });
   };
 
-  const handleSave = (boatListing) => {
+  const handleSave = async (boatListing) => {
+    const sessionCookie = Cookies.get('supabase-session');
+    console.log(sessionCookie);
+  
     const boatListingId = boatListing.boat_listing_id;
-    if (boatListingId) {
-      axios.put(`${API_URL}/${boatListingId}`, boatListing)
-        .then(() => {
-          fetchAllBoatListings();
-          closeForm();
-        })
-        .catch(error => console.error('Error updating boat listing:', error));
-    } else {
-      axios.post(API_URL, boatListing)
-        .then(() => {
-          fetchAllBoatListings();
-          closeForm();
-        })
-        .catch(error => console.error('Error creating boat listing:', error));
+  
+    try {
+      const response = await fetch(
+        boatListingId ? `${API_URL}/${boatListingId}` : API_URL,
+        {
+          method: boatListingId ? 'PUT' : 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${JSON.parse(sessionCookie).access_token}`
+          },
+          body: JSON.stringify(boatListing)
+        }
+      );
+  
+      if (response.ok) {
+        fetchAllBoatListings();
+        closeForm();
+      } else {
+        console.error('Error saving boat listing');
+      }
+    } catch (error) {
+      console.error('Error:', error);
     }
-  };
+  };  
 
   const handleSearch = ({ type, value }) => {
     let filtered = boatListings;
