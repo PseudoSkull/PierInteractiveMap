@@ -195,14 +195,6 @@ function MainCode({ session, supabase, appBackendHost, appBackendPort }) {
     updateTotalPages(filtered);
   };
 
-  // const clearAllBoatData = () => {
-  //   axios.delete('http://localhost:5000/boats-on-map/clear')
-  //     .then(() => {
-  //       setBoatsOnMap([{ id: 1, x: 200, y: 200, width: 100, height: 50, color: 'purple', angle: 0 }]);
-  //     })
-  //     .catch(error => console.error('Error clearing boats on map:', error));
-  // };
-
   const handleClearSearch = () => {
     setFilteredBoatListings(boatListings);
     setCurrentPage(1);
@@ -210,7 +202,7 @@ function MainCode({ session, supabase, appBackendHost, appBackendPort }) {
   };
 
   const fetchBoatsOnMap = () => {
-    axios.get('http://localhost:5000/boats-on-map')
+    axios.get(`${backendURLPrefix}/boats-on-map`)
       .then(response => setBoatsOnMap(response.data.boats_on_map))
       .catch(error => console.error('Error loading boats-on-map data:', error));
   };
@@ -220,7 +212,7 @@ function MainCode({ session, supabase, appBackendHost, appBackendPort }) {
   }, []);
 
   const saveBoatOnMap = (updatedBoatOnMap) => {
-    axios.put(`http://localhost:5000/boats-on-map/${updatedBoatOnMap.boat_on_map_id}`, updatedBoatOnMap)
+    axios.put(`${backendURLPrefix}/boats-on-map/${updatedBoatOnMap.boat_on_map_id}`, updatedBoatOnMap)
       .then(() => console.log('BoatOnMap updated successfully'))
       .catch(error => console.error('Error saving boatOnMap data:', error));
   };
@@ -287,7 +279,7 @@ function MainCode({ session, supabase, appBackendHost, appBackendPort }) {
 
     setBoatsOnMap([...boatsOnMap, newBoat]);
 
-    axios.post('http://localhost:5000/boats-on-map', newBoat)
+    axios.post(`${backendURLPrefix}/boats-on-map`, newBoat)
       .then(() => console.log('New boat added to backend'))
       .catch(error => console.error('Error adding new boat:', error));
   };
