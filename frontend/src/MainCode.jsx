@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import Cookies from 'js-cookie';
 import BoatList from './components/BoatList';
 import BoatForm from './components/BoatForm';
 import AreYouSure from './components/AreYouSure';
@@ -10,7 +11,7 @@ import Map from './components/Map'; // Import the new Map component
 import Subheader from './components/Subheader';
 import './styles/App.css';
 
-function MainCode({ session }) {
+function MainCode({ session, supabase }) {
   // List-related
   const [boatListings, setBoatListings] = useState([]); // All boats (for the list) fetched from the backend
   const [filteredBoatListings, setFilteredBoatListings] = useState([]); // Boats displayed after filtering or search
@@ -37,21 +38,48 @@ function MainCode({ session }) {
     fetchAllBoatListings();
   }, []);
 
-  const fetchAllBoatListings = () => {
-    axios.get(API_URL)
-      .then(response => {
-        const boatData = response.data.boat_listings || [];
-        setBoatListings(boatData);
-        setFilteredBoatListings(boatData);
-        setTotalPages(Math.ceil(boatData.length / boatListingsPerPage));
-      })
-      .catch(error => console.error('Error fetching boats:', error));
+  const fetchAllBoatListings = async () => {
+    try {
+      const sessionCookie = Cookies.get('supabase-session');
+  
+      const response = await fetch(API_URL, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+      });
+  
+      if (!response.ok) {
+        throw new Error(`Error fetching boats: ${response.statusText}`);
+      }
+  
+      const data = await response.json();
+      const boatData = data.boat_listings || [];
+  
+      setBoatListings(boatData);
+      setFilteredBoatListings(boatData);
+      setTotalPages(Math.ceil(boatData.length / boatListingsPerPage));
+    } catch (error) {
+      console.error('Error fetching boats:', error);
+    }
   };
 
-  const handleDelete = (boatListingId) => {
-    axios
-      .delete(`${API_URL}/${boatListingId}`)
-      .then(() => {
+  const handleDelete = async (boatListingId) => {
+    const sessionCookie = Cookies.get('supabase-session');
+    console.log(sessionCookie);
+  
+    try {
+      const response = await fetch(`${API_URL}/${boatListingId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${JSON.parse(sessionCookie).access_token}`
+        }
+      });
+  
+      if (response.ok) {
         const updatedBoatListings = boatListings.filter(
           (boatListing) => boatListing.boat_listing_id !== boatListingId
         );
@@ -59,9 +87,13 @@ function MainCode({ session }) {
         setFilteredBoatListings(updatedBoatListings);
         setShowConfirmation(false); // Close modal after deletion
         updateTotalPages(updatedBoatListings);
-      })
-      .catch((error) => console.error('Error deleting boat listing:', error));
-  };
+      } else {
+        console.error('Error deleting boat listing');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };  
 
   const updateTotalPages = (filteredBoatListingsList) => {
     const pages = Math.max(1, Math.ceil(filteredBoatListingsList.length / boatListingsPerPage));

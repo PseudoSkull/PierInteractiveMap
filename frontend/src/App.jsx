@@ -62,7 +62,10 @@ function App() {
       <p>Signed in as {session.user.email}</p>
       <button onClick={() => supabase.auth.signOut()}>Sign Out</button>
       <br />
-      <MainCode session={session} />
+      <MainCode
+        session={session}
+        supabase={supabase}
+      />
     </div>
   )
 }
