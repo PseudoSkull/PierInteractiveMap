@@ -3,11 +3,11 @@
 from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS  # Enable CORS for development; remember to configure or remove in production
-from config.config import WEB_HOST_OF_APP, PORT_OF_MAP_FRONTEND
+# from config.config import WEB_HOST_OF_APP, PORT_OF_MAP_FRONTEND
 import logging
 from flask_migrate import Migrate
 from sqlalchemy.inspection import inspect
-from env_variables import SUPABASE_DATABASE_PASSWORD, SUPABASE_APP_ID, SUPABASE_JWT_SECRET
+from env_variables import SUPABASE_DATABASE_PASSWORD, SUPABASE_APP_ID, SUPABASE_JWT_SECRET, WEB_HOST_OF_APP, PORT_OF_MAP_FRONTEND
 import jwt
 from jwt import ExpiredSignatureError, InvalidTokenError
 
@@ -18,14 +18,27 @@ if PORT_OF_MAP_FRONTEND != "":
 else:
     colon = ""
 
+# ALLOWED_CORS_ORIGINS = [
+#     f"http://{WEB_HOST_OF_APP}{colon}{PORT_OF_MAP_FRONTEND}",
+# ]
 ALLOWED_CORS_ORIGINS = [
-    f"http://{WEB_HOST_OF_APP}{colon}{PORT_OF_MAP_FRONTEND}",
+    f"http://{WEB_HOST_OF_APP}/",
 ]
 
 app = Flask(__name__)
-cors = CORS(app, resources={r"/*": 
-    {"origins": ALLOWED_CORS_ORIGINS}},
-            supports_credentials=True)  # For CORS, needed only in development
+# cors = CORS(app, resources={r"/*": 
+#     {"origins": ALLOWED_CORS_ORIGINS}},
+#             supports_credentials=True)  # For CORS, needed only in development
+
+CORS(app, resources={r"/*": {"origins": "https://pier-frontend-image-repo-86835021491.us-central1.run.app"}}, supports_credentials=True)
+
+@app.after_request
+def apply_cors(response):
+    response.headers['Access-Control-Allow-Origin'] = request.headers.get('Origin', '*')
+    response.headers['Access-Control-Allow-Credentials'] = 'true'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+    return response
 
 # app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://postgres.{SUPABASE_APP_ID}:{SUPABASE_DATABASE_PASSWORD}@aws-0-ca-central-1.pooler.supabase.com:6543/postgres"
@@ -250,5 +263,4 @@ def delete_boat_on_map(id):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)

@@ -84,3 +84,4 @@ backend/scripts/sample_data/
 # test data
 
 test/testData.json
+policy.yaml
