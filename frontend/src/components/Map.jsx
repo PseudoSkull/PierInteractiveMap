@@ -22,7 +22,7 @@ function Map({ boatsOnMap, setBoatsOnMap, saveBoatOnMap, activeBoatOnMapId,  set
   ];
 
   const [colorIndex, setColorIndex] = useState(0);
-  const [mapImage] = useImage('/map_for_inkscape.svg');
+  const [mapImage] = useImage('/map_for_inkscape.jpg');
   const [scaleImage] = useImage('/scale.png');
   const [scalePosition, setScalePosition] = useState({ x: 450, y: 1094 }); // Bottom-right corner
   const [scaleDraggable, setScaleDraggable] = useState(true);
