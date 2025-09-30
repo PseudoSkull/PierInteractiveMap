@@ -80,6 +80,8 @@ yarn.lock
 # backend config
 backend/config/
 backend/scripts/sample_data/
+docs/
+prompt.txt
 
 # test data
 
