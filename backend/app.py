@@ -1,5 +1,6 @@
 # app.py
 
+import os
 from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS  # Enable CORS for development; remember to configure or remove in production
@@ -30,6 +31,13 @@ app = Flask(__name__)
 #     {"origins": ALLOWED_CORS_ORIGINS}},
 #             supports_credentials=True)  # For CORS, needed only in development
 
+# Load config based on environment
+env = os.getenv('FLASK_ENV', 'production')
+if env == 'testing':
+    app.config.from_object('config.TestConfig')
+else:
+    app.config.from_object('config.ProductionConfig')
+
 CORS(app, resources={r"/*": {"origins": "https://pier-frontend-image-repo-86835021491.us-central1.run.app"}}, supports_credentials=True)
 
 @app.after_request
@@ -41,8 +49,8 @@ def apply_cors(response):
     return response
 
 # app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
-app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://postgres.{SUPABASE_APP_ID}:{SUPABASE_DATABASE_PASSWORD}@aws-0-ca-central-1.pooler.supabase.com:6543/postgres"
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://postgres.{SUPABASE_APP_ID}:{SUPABASE_DATABASE_PASSWORD}@aws-0-ca-central-1.pooler.supabase.com:6543/postgres"
+# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
