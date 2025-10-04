@@ -32,20 +32,22 @@ with app.app_context():
     BoatOnMap.query.delete()
     Version.query.delete()
     
-    # Create initial version
-    initial_version = Version(
+    # Create initial WORKING COPY (not a saved version yet)
+    initial_working_copy = Version(
         created_at=datetime.utcnow(),
-        note="Initial test data",
-        is_current=True
+        note="",
+        is_current=False,
+        is_working_copy=True
     )
-    db.session.add(initial_version)
+    db.session.add(initial_working_copy)
     db.session.flush()
     
+    # Create map positions first and store their IDs
+    map_positions = []
     for i in range(30):
-        # Create boat on map
         boat_map = BoatOnMap(
-            boat_on_map_id=i+1,
-            version_id=initial_version.version_id,
+            boat_on_map_id=i+1,  # Reference number
+            version_id=initial_working_copy.version_id,
             x=random.randint(100, 700),
             y=random.randint(100, 1000),
             width=random.randint(80, 150),
@@ -54,10 +56,13 @@ with app.app_context():
             angle=random.randint(0, 360)
         )
         db.session.add(boat_map)
-        
-        # Create boat listing
+        db.session.flush()  # Get the auto-generated ID
+        map_positions.append(boat_map)
+    
+    # Now create boat listings with proper foreign key references
+    for i in range(30):
         boat = BoatListing(
-            version_id=initial_version.version_id,
+            version_id=initial_working_copy.version_id,
             size=str(random.randint(20, 45)),
             name=boat_names[i],
             make_model=f"{random.choice(makes)} {random.randint(200, 400)}",
@@ -66,10 +71,11 @@ with app.app_context():
             section=random.choice(['A', 'B', 'C', 'D', 'E', 'F']),
             customer_name=customer_names[i],
             vehicle_type=random.choice(['Boat', 'Yacht', 'Speedboat', 'Fishing Boat']),
-            boat_on_map_id=i+1
+            map_position_id=map_positions[i].id  # Use the actual database ID
         )
         db.session.add(boat)
     
     db.session.commit()
-    print(f"✓ Created initial version (ID: {initial_version.version_id})")
+    print(f"✓ Created initial working copy (ID: {initial_working_copy.version_id})")
     print("✓ Created 30 boats with map positions")
+    print("Note: This is a WORKING COPY. Click 'Save Version' to create your first saved version.")
