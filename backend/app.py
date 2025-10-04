@@ -1,35 +1,28 @@
 # app.py
 
-import os
 from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
-from flask_cors import CORS  # Enable CORS for development; remember to configure or remove in production
-# from config.config import WEB_HOST_OF_APP, PORT_OF_MAP_FRONTEND
+from flask_cors import CORS
 import logging
 from flask_migrate import Migrate
 from sqlalchemy.inspection import inspect
-from env_variables import SUPABASE_DATABASE_PASSWORD, SUPABASE_APP_ID, SUPABASE_JWT_SECRET, WEB_HOST_OF_APP, PORT_OF_MAP_FRONTEND
+from env_variables import SUPABASE_JWT_SECRET, WEB_HOST_OF_APP, PORT_OF_MAP_FRONTEND
 import jwt
 from jwt import ExpiredSignatureError, InvalidTokenError
-
-# Initialize Flask-Migrate
+import os
+from datetime import datetime
+import json
 
 if PORT_OF_MAP_FRONTEND != "":
     colon = ":"
 else:
     colon = ""
 
-# ALLOWED_CORS_ORIGINS = [
-#     f"http://{WEB_HOST_OF_APP}{colon}{PORT_OF_MAP_FRONTEND}",
-# ]
 ALLOWED_CORS_ORIGINS = [
     f"http://{WEB_HOST_OF_APP}/",
 ]
 
 app = Flask(__name__)
-# cors = CORS(app, resources={r"/*": 
-#     {"origins": ALLOWED_CORS_ORIGINS}},
-#             supports_credentials=True)  # For CORS, needed only in development
 
 # Load config based on environment
 env = os.getenv('FLASK_ENV', 'production')
@@ -38,7 +31,11 @@ if env == 'testing':
 else:
     app.config.from_object('config.ProductionConfig')
 
-CORS(app, resources={r"/*": {"origins": "https://pier-frontend-image-repo-86835021491.us-central1.run.app"}}, supports_credentials=True)
+# Allow different origins based on environment
+if env == 'testing':
+    CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}}, supports_credentials=True)
+else:
+    CORS(app, resources={r"/*": {"origins": "https://pier-frontend-image-repo-86835021491.us-central1.run.app"}}, supports_credentials=True)
 
 @app.after_request
 def apply_cors(response):
@@ -48,45 +45,29 @@ def apply_cors(response):
     response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
     return response
 
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
-# app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://postgres.{SUPABASE_APP_ID}:{SUPABASE_DATABASE_PASSWORD}@aws-0-ca-central-1.pooler.supabase.com:6543/postgres"
-# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
 def validate_jwt(token):
-    """
-    Validate the JWT using the Supabase secret.
-    """
-    print(token)
     try:
         decoded = jwt.decode(
             token,
             SUPABASE_JWT_SECRET,
-            algorithms=["HS256"],  # Use the appropriate algorithm
-            audience="authenticated"  # Matches the 'aud' claim in the token
+            algorithms=["HS256"],
+            audience="authenticated"
         )
         return decoded
     except ExpiredSignatureError:
         print("Expired token")
         return None
-        # return {"error": "Token has expired"}
     except InvalidTokenError:
         return "Invalid token"
-        # return {"error": "Invalid token"}
 
-# Authentication function
 def authenticate_request():
-    # Retrieve the 'Authorization' header
     auth_header = request.headers.get('Authorization')
-
     if not auth_header or not auth_header.startswith('Bearer '):
         return jsonify({'error': 'Authorization header missing or malformed'}), 401
-
-    # Extract the token from the 'Bearer' prefix
     token = auth_header.split(' ')[1]
-
-    # Validate the JWT
     decoded_session = validate_jwt(token)
     if decoded_session == "Invalid token":
         return jsonify({'error': 'Invalid JWT'}), 401
@@ -94,18 +75,31 @@ def authenticate_request():
         return jsonify({'error': 'Expired JWT'}), 401
     if not decoded_session:
         return jsonify({'error': 'An unknown auth error occurred'}), 401
+    return True
 
-    return True  # Authentication successful
+class Version(db.Model):
+    version_id = db.Column(db.Integer, primary_key=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    note = db.Column(db.String(200))
+    is_current = db.Column(db.Boolean, default=False)
+
+    def to_dict(self):
+        return {
+            "version_id": self.version_id,
+            "created_at": self.created_at.isoformat(),
+            "note": self.note,
+            "is_current": self.is_current
+        }
 
 class BoatListing(db.Model):
     boat_listing_id = db.Column(db.Integer, primary_key=True)
+    version_id = db.Column(db.Integer, db.ForeignKey('version.version_id'), nullable=False)
     size = db.Column(db.String(50))
     name = db.Column(db.String(100))
     make_model = db.Column(db.String(100))
     notes = db.Column(db.Text)
-    index = db.Column(db.Integer, unique=True)
+    index = db.Column(db.Integer)
     section = db.Column(db.String(1))
-    mapped = db.Column(db.Boolean, default=False)
     customer_name = db.Column(db.String(100))
     vehicle_type = db.Column(db.String(50))
     boat_on_map_id = db.Column(db.Integer, nullable=True)
@@ -113,10 +107,9 @@ class BoatListing(db.Model):
     def to_dict(self):
         return {column.key: getattr(self, column.key) for column in inspect(self).mapper.column_attrs}
 
-
 class BoatOnMap(db.Model):
-    # id = db.Column(db.Integer, primary_key=True)
     boat_on_map_id = db.Column(db.Integer, primary_key=True)
+    version_id = db.Column(db.Integer, db.ForeignKey('version.version_id'), nullable=False)
     x = db.Column(db.Float, nullable=False, default=200.0)
     y = db.Column(db.Float, nullable=False, default=200.0)
     width = db.Column(db.Float, nullable=False, default=100.0)
@@ -126,7 +119,8 @@ class BoatOnMap(db.Model):
 
     def to_dict(self):
         return {
-            "boat_on_map_id": self.boat_on_map_id,  # Include reference field
+            "boat_on_map_id": self.boat_on_map_id,
+            "version_id": self.version_id,
             "x": self.x,
             "y": self.y,
             "width": self.width,
@@ -135,22 +129,167 @@ class BoatOnMap(db.Model):
             "angle": self.angle
         }
 
-
-
-
-# Create the database within the application context
 with app.app_context():
     db.create_all()
 
-# CRUD Operations
+# Version endpoints
+@app.route('/versions', methods=['GET'])
+def get_versions():
+    auth_result = authenticate_request()
+    if auth_result is not True:
+        return auth_result
+    
+    page = request.args.get('page', 1, type=int)
+    per_page = 10
+    
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    search_note = request.args.get('search_note')
+    
+    query = Version.query
+    
+    if start_date:
+        query = query.filter(Version.created_at >= datetime.fromisoformat(start_date))
+    if end_date:
+        query = query.filter(Version.created_at <= datetime.fromisoformat(end_date))
+    if search_note:
+        query = query.filter(Version.note.ilike(f'%{search_note}%'))
+    
+    query = query.order_by(Version.created_at.desc())
+    
+    paginated = query.paginate(page=page, per_page=per_page, error_out=False)
+    
+    return jsonify({
+        "versions": [v.to_dict() for v in paginated.items],
+        "total": paginated.total,
+        "pages": paginated.pages,
+        "current_page": page
+    })
 
+@app.route('/versions/current', methods=['GET'])
+def get_current_version():
+    auth_result = authenticate_request()
+    if auth_result is not True:
+        return auth_result
+    
+    current = Version.query.filter_by(is_current=True).first()
+    if not current:
+        return jsonify({"error": "No current version"}), 404
+    return jsonify(current.to_dict())
+
+@app.route('/versions', methods=['POST'])
+def create_version():
+    auth_result = authenticate_request()
+    if auth_result is not True:
+        return auth_result
+    
+    data = request.json
+    
+    # Get current version data
+    current_version = Version.query.filter_by(is_current=True).first()
+    
+    # Create new version
+    new_version = Version(
+        created_at=datetime.utcnow(),
+        note=data.get('note'),
+        is_current=True
+    )
+    db.session.add(new_version)
+    db.session.flush()
+    
+    # Copy all current boats and maps to new version
+    if current_version:
+        current_version.is_current = False
+        
+        current_boats = BoatListing.query.filter_by(version_id=current_version.version_id).all()
+        current_maps = BoatOnMap.query.filter_by(version_id=current_version.version_id).all()
+        
+        for boat in current_boats:
+            new_boat = BoatListing(
+                version_id=new_version.version_id,
+                size=boat.size,
+                name=boat.name,
+                make_model=boat.make_model,
+                notes=boat.notes,
+                index=boat.index,
+                section=boat.section,
+                customer_name=boat.customer_name,
+                vehicle_type=boat.vehicle_type,
+                boat_on_map_id=boat.boat_on_map_id
+            )
+            db.session.add(new_boat)
+        
+        for boat_map in current_maps:
+            new_map = BoatOnMap(
+                version_id=new_version.version_id,
+                boat_on_map_id=boat_map.boat_on_map_id,
+                x=boat_map.x,
+                y=boat_map.y,
+                width=boat_map.width,
+                height=boat_map.height,
+                color=boat_map.color,
+                angle=boat_map.angle
+            )
+            db.session.add(new_map)
+    
+    db.session.commit()
+    return jsonify(new_version.to_dict()), 201
+
+@app.route('/versions/<int:version_id>/restore', methods=['POST'])
+def restore_version(version_id):
+    auth_result = authenticate_request()
+    if auth_result is not True:
+        return auth_result
+    
+    version_to_restore = Version.query.get_or_404(version_id)
+    
+    # Mark all versions as not current
+    Version.query.update({Version.is_current: False})
+    
+    # Mark this version as current
+    version_to_restore.is_current = True
+    
+    db.session.commit()
+    return jsonify({"message": "Version restored"})
+
+@app.route('/versions/<int:version_id>/note', methods=['PUT'])
+def update_version_note(version_id):
+    auth_result = authenticate_request()
+    if auth_result is not True:
+        return auth_result
+    
+    data = request.json
+    version = Version.query.get_or_404(version_id)
+    version.note = data.get('note', '')[:200]  # Max 200 chars
+    db.session.commit()
+    return jsonify(version.to_dict())
+
+@app.route('/versions/<int:version_id>/data', methods=['GET'])
+def get_version_data(version_id):
+    auth_result = authenticate_request()
+    if auth_result is not True:
+        return auth_result
+    
+    boats = BoatListing.query.filter_by(version_id=version_id).all()
+    maps = BoatOnMap.query.filter_by(version_id=version_id).all()
+    
+    return jsonify({
+        "boat_listings": [b.to_dict() for b in boats],
+        "boats_on_map": [m.to_dict() for m in maps]
+    })
+
+# Modified boat listing endpoints to work with current version
 @app.route('/boat_listings', methods=['GET'])
 def get_boat_listings():
     auth_result = authenticate_request()
     if auth_result is not True:
         return auth_result
     
-    boat_listings = BoatListing.query.all()
+    current_version = Version.query.filter_by(is_current=True).first()
+    if not current_version:
+        return jsonify({"boat_listings": []})
+    
+    boat_listings = BoatListing.query.filter_by(version_id=current_version.version_id).all()
     return jsonify({
         "boat_listings": [boat_listing.to_dict() for boat_listing in boat_listings],
     })
@@ -161,17 +300,22 @@ def create_boat():
     if auth_result is not True:
         return auth_result
     
+    current_version = Version.query.filter_by(is_current=True).first()
+    if not current_version:
+        return jsonify({"error": "No current version"}), 400
+    
     data = request.json
     new_boat = BoatListing(
+        version_id=current_version.version_id,
         size=data['size'],
         name=data['name'],
         make_model=data['make_model'],
         notes=data['notes'],
         index=data['index'],
         section=data['section'],
-        mapped=False,  # Default to unmapped
-        customer_name=data.get('customer_name'),  # Add new field
-        vehicle_type=data.get('vehicle_type')  # Add new field
+        customer_name=data.get('customer_name'),
+        vehicle_type=data.get('vehicle_type'),
+        boat_on_map_id=data.get('boat_on_map_id')
     )
     db.session.add(new_boat)
     db.session.commit()
@@ -191,10 +335,9 @@ def update_boat_listing(boat_id):
     boat_listing.notes = data['notes']
     boat_listing.index = data['index']
     boat_listing.section = data['section']
-    boat_listing.customer_name = data.get('customer_name')  # Update new field
-    boat_listing.vehicle_type = data.get('vehicle_type')  # Update new field
+    boat_listing.customer_name = data.get('customer_name')
+    boat_listing.vehicle_type = data.get('vehicle_type')
     boat_listing.boat_on_map_id = data.get('boat_on_map_id')
-    print(f"Yes, we are getting here. Here's the boat listing: {boat_listing} Here's data's boat_on_map_id: {data['boat_on_map_id']}")
     db.session.commit()
     return jsonify(boat_listing.to_dict())
 
@@ -207,8 +350,7 @@ def delete_boat_listing(boat_id):
     boat = BoatListing.query.get_or_404(boat_id)
     db.session.delete(boat)
     db.session.commit()
-    return jsonify({"message": "Boat lsting deleted successfully"})
-
+    return jsonify({"message": "Boat listing deleted successfully"})
 
 @app.route('/boats-on-map', methods=['GET'])
 def get_boats_on_map():
@@ -216,7 +358,11 @@ def get_boats_on_map():
     if auth_result is not True:
         return auth_result
     
-    boats_on_map = BoatOnMap.query.all()
+    current_version = Version.query.filter_by(is_current=True).first()
+    if not current_version:
+        return jsonify({"boats_on_map": []})
+    
+    boats_on_map = BoatOnMap.query.filter_by(version_id=current_version.version_id).all()
     return jsonify({
         "boats_on_map": [boat_on_map.to_dict() for boat_on_map in boats_on_map],
     })
@@ -227,8 +373,13 @@ def create_boat_on_map():
     if auth_result is not True:
         return auth_result
     
+    current_version = Version.query.filter_by(is_current=True).first()
+    if not current_version:
+        return jsonify({"error": "No current version"}), 400
+    
     data = request.json
     new_boat_on_map = BoatOnMap(
+        version_id=current_version.version_id,
         boat_on_map_id=data.get('boat_on_map_id'),
         x=data['x'],
         y=data['y'],
@@ -248,7 +399,12 @@ def update_boat_on_map(id):
         return auth_result
     
     data = request.json
-    boat_on_map = BoatOnMap.query.get_or_404(id)
+    current_version = Version.query.filter_by(is_current=True).first()
+    boat_on_map = BoatOnMap.query.filter_by(
+        boat_on_map_id=id,
+        version_id=current_version.version_id
+    ).first_or_404()
+    
     boat_on_map.x = data['x']
     boat_on_map.y = data['y']
     boat_on_map.width = data['width']
@@ -264,11 +420,14 @@ def delete_boat_on_map(id):
     if auth_result is not True:
         return auth_result
     
-    boat_on_map = BoatOnMap.query.get_or_404(id)
+    current_version = Version.query.filter_by(is_current=True).first()
+    boat_on_map = BoatOnMap.query.filter_by(
+        boat_on_map_id=id,
+        version_id=current_version.version_id
+    ).first_or_404()
     db.session.delete(boat_on_map)
     db.session.commit()
     return jsonify({"message": "BoatOnMap data deleted successfully"})
-
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)

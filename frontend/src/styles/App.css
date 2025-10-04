@@ -3,8 +3,50 @@
 body, html {
   margin: 0;
   padding: 0;
-  min-height: 100vh; /* Minimum height for the page */
-  overflow-y: auto; /* Allow vertical scrolling */
+  min-height: 100vh;
+  overflow-y: auto;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.top-bar {
+  background-color: #2c3e50;
+  color: white;
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 1001;
+}
+
+.top-bar span {
+  margin-right: 15px;
+}
+
+.top-bar button {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  margin-left: 10px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.top-bar button:hover {
+  background-color: #2980b9;
+}
+
+.version-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .header {
@@ -14,17 +56,16 @@ body, html {
   justify-content: space-between;
   align-items: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  position: fixed; /* Fix it to the top of the viewport */
-  top: 0;
+  position: sticky;
+  top: 50px;
   left: 0;
-  width: 100% !important; /* Force it to always take up the entire page width */
-  /* max-width: 100% !important; Ensure it doesn't get restricted by any parent */
+  width: 100% !important;
   z-index: 1000;
 }
 
 .container {
   display: flex;
-  flex-wrap: nowrap; /* Prevent wrapping */
+  flex-wrap: nowrap;
   width: 100%;
 }
 
@@ -92,29 +133,29 @@ button {
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 2000;
 }
 
-/* Ensure the form input text is visible */
 .boat-form input,
 .boat-form textarea,
 .boat-form select {
-  color: #000 !important; /* Force text color to black */
-  background-color: #f5f5f5; /* Set background to a light color */
-  border: 1px solid #ccc; /* Optional: Add border to inputs */
+  color: #000 !important;
+  background-color: #f5f5f5;
+  border: 1px solid #ccc;
   padding: 10px;
   margin-bottom: 10px;
-  width: 100%; /* Ensure inputs take full width */
+  width: 100%;
   box-sizing: border-box;
 }
 
 .boat-form input::placeholder,
 .boat-form textarea::placeholder {
-  color: #888 !important; /* Lighter color for placeholders */
+  color: #888 !important;
 }
 
 .boat-form button {
-  background-color: #333; /* Dark background for buttons */
-  color: #fff !important; /* White text for contrast */
+  background-color: #333;
+  color: #fff !important;
   padding: 10px 20px;
   border: none;
   cursor: pointer;
@@ -122,7 +163,7 @@ button {
 }
 
 .boat-form button:hover {
-  background-color: #555; /* Slightly lighter on hover */
+  background-color: #555;
 }
 
 .boat-form {
@@ -148,6 +189,7 @@ button {
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 2000;
 }
 
 .confirmation-box {
@@ -161,4 +203,248 @@ button {
   display: flex;
   justify-content: space-around;
   margin-top: 20px;
+}
+
+/* Version History Styles */
+.version-history-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.version-history-container {
+  background: white;
+  width: 80%;
+  max-width: 900px;
+  height: 80vh;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.version-history-header {
+  background-color: #34495e;
+  color: white;
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.version-history-header h2 {
+  margin: 0;
+}
+
+.version-history-header button {
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.version-history-header button:hover {
+  background-color: #c0392b;
+}
+
+.search-filters {
+  padding: 15px 20px;
+  background-color: #ecf0f1;
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.search-filters > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.search-filters label {
+  font-size: 12px;
+  margin-bottom: 5px;
+  color: #555;
+}
+
+.search-filters input {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.search-filters button {
+  padding: 8px 15px;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+  height: 36px;
+}
+
+.search-filters button:hover {
+  background-color: #2980b9;
+}
+
+.versions-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.version-item {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+  background-color: #f9f9f9;
+}
+
+.version-info {
+  margin-bottom: 10px;
+}
+
+.version-info strong {
+  font-size: 16px;
+  color: #2c3e50;
+}
+
+.current-badge {
+  background-color: #27ae60;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  margin-left: 10px;
+}
+
+.version-note {
+  margin-top: 8px;
+  padding: 8px;
+  background-color: #fff3cd;
+  border-left: 3px solid #ffc107;
+  font-style: italic;
+  color: #856404;
+}
+
+.note-editor {
+  margin-top: 10px;
+  display: flex;
+  gap: 5px;
+}
+
+.note-editor input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.note-editor button {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.note-editor button:first-of-type {
+  background-color: #27ae60;
+  color: white;
+}
+
+.note-editor button:first-of-type:hover {
+  background-color: #229954;
+}
+
+.note-editor button:last-of-type {
+  background-color: #95a5a6;
+  color: white;
+}
+
+.note-editor button:last-of-type:hover {
+  background-color: #7f8c8d;
+}
+
+.version-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.version-actions button {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.version-actions button:nth-child(1) {
+  background-color: #3498db;
+  color: white;
+}
+
+.version-actions button:nth-child(1):hover {
+  background-color: #2980b9;
+}
+
+.version-actions button:nth-child(2) {
+  background-color: #e67e22;
+  color: white;
+}
+
+.version-actions button:nth-child(2):hover {
+  background-color: #d35400;
+}
+
+.version-actions button:nth-child(3) {
+  background-color: #9b59b6;
+  color: white;
+}
+
+.version-actions button:nth-child(3):hover {
+  background-color: #8e44ad;
+}
+
+/* Version Viewer Styles */
+.version-viewer {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.viewer-header {
+  background-color: #34495e;
+  color: white;
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.viewer-header h2 {
+  margin: 0;
+}
+
+.viewer-header button {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.viewer-header button:hover {
+  background-color: #2980b9;
 }

@@ -1,5 +1,6 @@
 # backend/populate_test_data.py
-from app import app, db, BoatListing, BoatOnMap
+from app import app, db, BoatListing, BoatOnMap, Version
+from datetime import datetime
 import random
 
 boat_names = [
@@ -29,11 +30,22 @@ with app.app_context():
     # Clear existing data
     BoatListing.query.delete()
     BoatOnMap.query.delete()
+    Version.query.delete()
+    
+    # Create initial version
+    initial_version = Version(
+        created_at=datetime.utcnow(),
+        note="Initial test data",
+        is_current=True
+    )
+    db.session.add(initial_version)
+    db.session.flush()
     
     for i in range(30):
         # Create boat on map
         boat_map = BoatOnMap(
             boat_on_map_id=i+1,
+            version_id=initial_version.version_id,
             x=random.randint(100, 700),
             y=random.randint(100, 1000),
             width=random.randint(80, 150),
@@ -45,6 +57,7 @@ with app.app_context():
         
         # Create boat listing
         boat = BoatListing(
+            version_id=initial_version.version_id,
             size=str(random.randint(20, 45)),
             name=boat_names[i],
             make_model=f"{random.choice(makes)} {random.randint(200, 400)}",
@@ -58,4 +71,5 @@ with app.app_context():
         db.session.add(boat)
     
     db.session.commit()
+    print(f"✓ Created initial version (ID: {initial_version.version_id})")
     print("✓ Created 30 boats with map positions")

@@ -1,4 +1,4 @@
-// ./MainCode.jsx
+// frontend/src/MainCode.jsx
 
 import React, { useState, useEffect } from 'react';
 import Cookies from 'js-cookie';
@@ -6,40 +6,107 @@ import BoatList from './components/BoatList';
 import BoatForm from './components/BoatForm';
 import AreYouSure from './components/AreYouSure';
 import Header from './components/Header';
-import Map from './components/Map'; // Import the new Map component
+import Map from './components/Map';
 import Subheader from './components/Subheader';
+import VersionHistory from './components/VersionHistory';
+import VersionViewer from './components/VersionViewer';
 import './styles/App.css';
 
 function MainCode({ session, supabase, appBackendHost, appBackendPort }) {
-  // List-related
-
   const backendURLPrefix = appBackendPort
     ? `http://${appBackendHost}:${appBackendPort}`
     : `https://${appBackendHost}`;
   
-  const boatListingsURL = `${backendURLPrefix}/boat_listings`; // Base URL for the boat listing API
-  const [boatListings, setBoatListings] = useState([]); // All boats (for the list) fetched from the backend
-  const [filteredBoatListings, setFilteredBoatListings] = useState([]); // Boats displayed after filtering or search
-  const [currentPage, setCurrentPage] = useState(1); // Current page for pagination
-  const [boatListingsPerPage] = useState(10); // Number of boat listings per page
-  const [totalPages, setTotalPages] = useState(1); // Total pages available
-  const [selectedBoatListing, setSelectedBoatListing] = useState(null); // Boat selected for editing or viewing
-  const [showForm, setShowForm] = useState(false); // Show or hide boat form modal
-  // const [deleteBoatListingId, setDeleteBoatListingId] = useState(null); // ID of the boat to be deleted
+  const boatListingsURL = `${backendURLPrefix}/boat_listings`;
+  
+  const [boatListings, setBoatListings] = useState([]);
+  const [filteredBoatListings, setFilteredBoatListings] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [boatListingsPerPage] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [selectedBoatListing, setSelectedBoatListing] = useState(null);
+  const [showForm, setShowForm] = useState(false);
 
-  // Map-related
-  const [boatsOnMap, setBoatsOnMap] = useState([]); // All boats (for the map) fetched from the backend
+  const [boatsOnMap, setBoatsOnMap] = useState([]);
   const [activeBoatOnMapId, setActiveBoatOnMapId] = useState(null);
   const [boatFindMode, setBoatFindMode] = useState(false);
   const [highlightedBoatId, setHighlightedBoatId] = useState(null);
 
-  const [showConfirmation, setShowConfirmation] = useState(false); // Show or hide delete confirmation modal
+  const [showConfirmation, setShowConfirmation] = useState(false);
   const [unassignedOnlyMode, setAssignedOnlyMode] = useState(false);
   const [selectedBoatOnMap, setSelectedBoatOnMap] = useState(null);
 
+  // Version history state
+  const [showVersionHistory, setShowVersionHistory] = useState(false);
+  const [viewingVersionId, setViewingVersionId] = useState(null);
+  const [currentVersion, setCurrentVersion] = useState(null);
+  const [lastChange, setLastChange] = useState(Date.now());
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
   useEffect(() => {
     fetchAllBoatListings();
+    fetchBoatsOnMap();
+    fetchCurrentVersion();
+    
+    // Auto-save every 10 minutes if there are changes
+    const autoSaveInterval = setInterval(() => {
+      if (hasUnsavedChanges) {
+        handleSaveVersion();
+      }
+    }, 10 * 60 * 1000); // 10 minutes
+
+    return () => clearInterval(autoSaveInterval);
   }, []);
+
+  const fetchCurrentVersion = async () => {
+    try {
+      const sessionCookie = Cookies.get('supabase-session');
+      const response = await fetch(`${backendURLPrefix}/versions/current`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${JSON.parse(sessionCookie).access_token}`,
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setCurrentVersion(data);
+      }
+    } catch (error) {
+      console.error('Error fetching current version:', error);
+    }
+  };
+
+  const handleSaveVersion = async () => {
+    const sessionCookie = Cookies.get('supabase-session');
+    
+    try {
+      const response = await fetch(`${backendURLPrefix}/versions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${JSON.parse(sessionCookie).access_token}`,
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({})
+      });
+
+      if (response.ok) {
+        setHasUnsavedChanges(false);
+        fetchCurrentVersion();
+        alert('Version saved successfully!');
+      }
+    } catch (error) {
+      console.error('Error saving version:', error);
+    }
+  };
+
+  const markChanged = () => {
+    setHasUnsavedChanges(true);
+    setLastChange(Date.now());
+  };
 
   const fetchAllBoatListings = async () => {
     try {
@@ -71,7 +138,6 @@ function MainCode({ session, supabase, appBackendHost, appBackendPort }) {
 
   const handleDelete = async (boatListingId) => {
     const sessionCookie = Cookies.get('supabase-session');
-    console.log(sessionCookie);
   
     try {
       const response = await fetch(`${boatListingsURL}/${boatListingId}`, {
@@ -88,8 +154,9 @@ function MainCode({ session, supabase, appBackendHost, appBackendPort }) {
         );
         setBoatListings(updatedBoatListings);
         setFilteredBoatListings(updatedBoatListings);
-        setShowConfirmation(false); // Close modal after deletion
+        setShowConfirmation(false);
         updateTotalPages(updatedBoatListings);
+        markChanged();
       } else {
         console.error('Error deleting boat listing');
       }
@@ -143,8 +210,6 @@ function MainCode({ session, supabase, appBackendHost, appBackendPort }) {
 
   const handleSave = async (boatListing) => {
     const sessionCookie = Cookies.get('supabase-session');
-    console.log(sessionCookie);
-  
     const boatListingId = boatListing.boat_listing_id;
   
     try {
@@ -163,6 +228,7 @@ function MainCode({ session, supabase, appBackendHost, appBackendPort }) {
       if (response.ok) {
         fetchAllBoatListings();
         closeForm();
+        markChanged();
       } else {
         console.error('Error saving boat listing');
       }
@@ -202,7 +268,6 @@ function MainCode({ session, supabase, appBackendHost, appBackendPort }) {
 
   const fetchBoatsOnMap = async () => {
     const sessionCookie = Cookies.get('supabase-session');
-    console.log(sessionCookie);
   
     try {
       const response = await fetch(`${backendURLPrefix}/boats-on-map`, {
@@ -223,15 +288,9 @@ function MainCode({ session, supabase, appBackendHost, appBackendPort }) {
       console.error('Error:', error);
     }
   };
-  
-
-  useEffect(() => {
-    fetchBoatsOnMap();
-  }, []);
 
   const saveBoatOnMap = async (updatedBoatOnMap) => {
     const sessionCookie = Cookies.get('supabase-session');
-    console.log(sessionCookie);
   
     try {
       const response = await fetch(`${backendURLPrefix}/boats-on-map/${updatedBoatOnMap.boat_on_map_id}`, {
@@ -245,6 +304,7 @@ function MainCode({ session, supabase, appBackendHost, appBackendPort }) {
   
       if (response.ok) {
         console.log('BoatOnMap updated successfully');
+        markChanged();
       } else {
         console.error('Error saving boatOnMap data');
       }
@@ -257,20 +317,6 @@ function MainCode({ session, supabase, appBackendHost, appBackendPort }) {
     (currentPage - 1) * boatListingsPerPage,
     currentPage * boatListingsPerPage
   );
-
-  const matchBoatOnMapIdToBoatListing = (boatOnMapId) => {
-    const matchingBoatListings = boatListings.filter(
-      (boatListing) => boatListing.boat_on_map_id === boatOnMapId
-    );
-
-    if (matchingBoatListings.length > 0) {
-      console.log(`Found ${matchingBoatListings.length} matching boat listing(s):`, matchingBoatListings);
-      return matchingBoatListings;
-    } else {
-      console.log('No matching boat listings found for the given boat_on_map_id.');
-      return [];
-    }
-  };
 
   const enterBoatFindMode = (boatListing) => {
     setBoatFindMode(true);
@@ -299,7 +345,6 @@ function MainCode({ session, supabase, appBackendHost, appBackendPort }) {
 
   const addNewBoatOnMap = async () => {
     const sessionCookie = Cookies.get('supabase-session');
-    console.log(sessionCookie);
   
     const newBoatOnMapId = boatsOnMap.length
       ? Math.max(...boatsOnMap.map(boatOnMap => boatOnMap.boat_on_map_id)) + 1
@@ -313,7 +358,6 @@ function MainCode({ session, supabase, appBackendHost, appBackendPort }) {
       height: 50,
       color: 'purple',
       angle: 0,
-      border: null,
     };
   
     setBoatsOnMap([...boatsOnMap, newBoat]);
@@ -330,6 +374,7 @@ function MainCode({ session, supabase, appBackendHost, appBackendPort }) {
   
       if (response.ok) {
         console.log('New boat added to backend');
+        markChanged();
       } else {
         console.error('Error adding new boat');
       }
@@ -346,7 +391,7 @@ function MainCode({ session, supabase, appBackendHost, appBackendPort }) {
 
     const newBoatsOnMap = boatsOnMap.map(boatOnMap =>
       boatOnMap.boat_on_map_id === activeBoatOnMapId
-        ? { ...boatOnMap, x: 200, y: 200 } // Adjusted for map center
+        ? { ...boatOnMap, x: 200, y: 200 }
         : boatOnMap
     );
 
@@ -366,11 +411,9 @@ function MainCode({ session, supabase, appBackendHost, appBackendPort }) {
     }
   
     setShowConfirmation({
-      message: `Assign this map selection to Boat Listing ‘${boatListing.name || 'Untitled'}’?`,
+      message: `Assign this map selection to Boat Listing '${boatListing.name || 'Untitled'}'?`,
       onYes: async () => {
         const sessionCookie = Cookies.get('supabase-session');
-        console.log(sessionCookie);
-  
         const updatedBoatListing = { ...boatListing, boat_on_map_id: activeBoatOnMapId };
   
         try {
@@ -386,6 +429,7 @@ function MainCode({ session, supabase, appBackendHost, appBackendPort }) {
           if (response.ok) {
             fetchAllBoatListings();
             setShowConfirmation(false);
+            markChanged();
           } else {
             console.error('Error assigning boat listing to map');
           }
@@ -422,10 +466,58 @@ function MainCode({ session, supabase, appBackendHost, appBackendPort }) {
     (currentPage - 1) * boatListingsPerPage,
     currentPage * boatListingsPerPage
   );
-    
 
+  const handleViewVersion = (versionId) => {
+    setViewingVersionId(versionId);
+    setShowVersionHistory(false);
+  };
+
+  const handleBackToMain = () => {
+    setViewingVersionId(null);
+    setShowVersionHistory(false);
+  };
+
+  const handleBackToVersions = () => {
+    setViewingVersionId(null);
+    setShowVersionHistory(true);
+  };
+
+  // If viewing a historical version
+  if (viewingVersionId) {
+    return (
+      <VersionViewer
+        backendURLPrefix={backendURLPrefix}
+        versionId={viewingVersionId}
+        onBack={handleBackToVersions}
+      />
+    );
+  }
+
+  // If showing version history
+  if (showVersionHistory) {
+    return (
+      <VersionHistory
+        backendURLPrefix={backendURLPrefix}
+        onClose={handleBackToMain}
+        onViewVersion={handleViewVersion}
+      />
+    );
+  }
+
+  // Main view
   return (
     <div className="app">
+      <div className="top-bar">
+        <span>Signed in as {session.user.email}</span>
+        <button onClick={() => supabase.auth.signOut()}>Sign Out</button>
+        <div className="version-controls">
+          <span>
+            Now on version: {currentVersion ? new Date(currentVersion.created_at).toLocaleString() : 'Loading...'}
+          </span>
+          <button onClick={handleSaveVersion}>Save Version</button>
+          <button onClick={() => setShowVersionHistory(true)}>Version History</button>
+        </div>
+      </div>
       <Header onSearch={handleSearch} onClear={handleClearSearch} />
       <Subheader
         addNewBoatOnMap={addNewBoatOnMap}
