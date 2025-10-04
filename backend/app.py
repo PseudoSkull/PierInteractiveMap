@@ -80,12 +80,11 @@ def authenticate_request():
 class Version(db.Model):
     version_id = db.Column(db.Integer, primary_key=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    saved_at = db.Column(db.DateTime, nullable=True)  # NEW: when it was saved as a version
+    saved_at = db.Column(db.DateTime, nullable=True)
     note = db.Column(db.String(200))
     is_current = db.Column(db.Boolean, default=False)
     is_working_copy = db.Column(db.Boolean, default=False)
     
-    # Relationships
     boat_listings = db.relationship('BoatListing', backref='version', lazy=True, cascade='all, delete-orphan')
     boats_on_map = db.relationship('BoatOnMap', backref='version', lazy=True, cascade='all, delete-orphan')
 
@@ -97,20 +96,10 @@ class Version(db.Model):
             "note": self.note,
             "is_current": self.is_current
         }
-    boats_on_map = db.relationship('BoatOnMap', backref='version', lazy=True, cascade='all, delete-orphan')
-
-    def to_dict(self):
-        return {
-            "version_id": self.version_id,
-            "created_at": self.created_at.isoformat(),
-            "note": self.note,
-            "is_current": self.is_current
-        }
 
 class BoatOnMap(db.Model):
-    # Changed: id is now the primary key, boat_on_map_id is just a reference number
     id = db.Column(db.Integer, primary_key=True)
-    boat_on_map_id = db.Column(db.Integer, nullable=False)  # Reference number, not unique
+    boat_on_map_id = db.Column(db.Integer, nullable=False)
     version_id = db.Column(db.Integer, db.ForeignKey('version.version_id'), nullable=False)
     x = db.Column(db.Float, nullable=False, default=200.0)
     y = db.Column(db.Float, nullable=False, default=200.0)
@@ -119,7 +108,6 @@ class BoatOnMap(db.Model):
     color = db.Column(db.String(50), nullable=False, default='purple')
     angle = db.Column(db.Float, nullable=False, default=0)
     
-    # Relationship to boat listing
     boat_listing = db.relationship('BoatListing', backref='map_position', uselist=False)
 
     def to_dict(self):
@@ -146,8 +134,6 @@ class BoatListing(db.Model):
     section = db.Column(db.String(1))
     customer_name = db.Column(db.String(100))
     vehicle_type = db.Column(db.String(50))
-    
-    # Foreign key to BoatOnMap
     map_position_id = db.Column(db.Integer, db.ForeignKey('boat_on_map.id'), nullable=True)
 
     def to_dict(self):
@@ -170,16 +156,16 @@ def get_versions():
     end_date = request.args.get('end_date')
     search_note = request.args.get('search_note')
     
-    query = Version.query
+    query = Version.query.filter_by(is_working_copy=False)
     
     if start_date:
-        query = query.filter(Version.created_at >= datetime.fromisoformat(start_date))
+        query = query.filter(Version.saved_at >= datetime.fromisoformat(start_date))
     if end_date:
-        query = query.filter(Version.created_at <= datetime.fromisoformat(end_date))
+        query = query.filter(Version.saved_at <= datetime.fromisoformat(end_date))
     if search_note:
         query = query.filter(Version.note.ilike(f'%{search_note}%'))
     
-    query = query.order_by(Version.created_at.desc())
+    query = query.order_by(Version.saved_at.desc())
     
     paginated = query.paginate(page=page, per_page=per_page, error_out=False)
     
@@ -196,7 +182,6 @@ def get_current_version():
     if auth_result is not True:
         return auth_result
     
-    # Return the last SAVED version (is_current=True, is_working_copy=False)
     current = Version.query.filter_by(is_current=True, is_working_copy=False).first()
     if not current:
         return jsonify({"error": "No current version"}), 404
@@ -209,26 +194,23 @@ def create_version():
         return auth_result
     
     data = request.json
-    
-    # Get the working copy
     working_copy = Version.query.filter_by(is_working_copy=True).first()
     
     if not working_copy:
         return jsonify({"error": "No working copy exists"}), 400
     
-    # Convert working copy to a saved version
+    Version.query.update({Version.is_current: False})
+    db.session.flush()
+    
     working_copy.is_working_copy = False
     working_copy.is_current = True
     working_copy.note = data.get('note', '')
-    working_copy.saved_at = datetime.utcnow()  # Set when it was saved
+    working_copy.saved_at = datetime.utcnow()
+    db.session.flush()
     
-    # Mark all other versions as not current
-    Version.query.filter(Version.version_id != working_copy.version_id).update({Version.is_current: False})
-    
-    # Create NEW working copy as duplicate of what we just saved
     new_working_copy = Version(
         created_at=datetime.utcnow(),
-        saved_at=None,  # Not saved yet
+        saved_at=None,
         note="",
         is_current=False,
         is_working_copy=True
@@ -236,10 +218,8 @@ def create_version():
     db.session.add(new_working_copy)
     db.session.flush()
     
-    # Create mapping from old map IDs to new map objects
     old_to_new_map = {}
     
-    # Copy all boats and maps from the version we just saved
     saved_maps = BoatOnMap.query.filter_by(version_id=working_copy.version_id).all()
     for boat_map in saved_maps:
         new_map = BoatOnMap(
@@ -283,12 +263,10 @@ def restore_version(version_id):
     
     version_to_restore = Version.query.get_or_404(version_id)
     
-    # Delete the current working copy
     working_copy = Version.query.filter_by(is_working_copy=True).first()
     if working_copy:
         db.session.delete(working_copy)
     
-    # Create new working copy from the version being restored
     new_working_copy = Version(
         created_at=datetime.utcnow(),
         note="",
@@ -298,7 +276,6 @@ def restore_version(version_id):
     db.session.add(new_working_copy)
     db.session.flush()
     
-    # Copy data from restored version
     old_to_new_map = {}
     
     restored_maps = BoatOnMap.query.filter_by(version_id=version_to_restore.version_id).all()
@@ -369,7 +346,6 @@ def get_boat_listings():
     if auth_result is not True:
         return auth_result
     
-    # Get the working copy
     working_copy = Version.query.filter_by(is_working_copy=True).first()
     if not working_copy:
         return jsonify({"boat_listings": []})
@@ -385,7 +361,6 @@ def create_boat():
     if auth_result is not True:
         return auth_result
     
-    # Get the working copy
     working_copy = Version.query.filter_by(is_working_copy=True).first()
     if not working_copy:
         return jsonify({"error": "No working copy exists"}), 400
@@ -444,7 +419,6 @@ def get_boats_on_map():
     if auth_result is not True:
         return auth_result
     
-    # Get the working copy
     working_copy = Version.query.filter_by(is_working_copy=True).first()
     if not working_copy:
         return jsonify({"boats_on_map": []})
@@ -460,7 +434,6 @@ def create_boat_on_map():
     if auth_result is not True:
         return auth_result
     
-    # Get the working copy
     working_copy = Version.query.filter_by(is_working_copy=True).first()
     if not working_copy:
         return jsonify({"error": "No working copy exists"}), 400
@@ -487,10 +460,8 @@ def update_boat_on_map(boat_on_map_id):
         return auth_result
     
     data = request.json
-    # Get the working copy
     working_copy = Version.query.filter_by(is_working_copy=True).first()
     
-    # Find the boat by boat_on_map_id in the working copy
     boat_on_map = BoatOnMap.query.filter_by(
         boat_on_map_id=boat_on_map_id,
         version_id=working_copy.version_id
@@ -511,10 +482,8 @@ def delete_boat_on_map(boat_on_map_id):
     if auth_result is not True:
         return auth_result
     
-    # Get the working copy
     working_copy = Version.query.filter_by(is_working_copy=True).first()
     
-    # Find by boat_on_map_id in the working copy
     boat_on_map = BoatOnMap.query.filter_by(
         boat_on_map_id=boat_on_map_id,
         version_id=working_copy.version_id

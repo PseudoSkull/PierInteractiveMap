@@ -320,9 +320,9 @@ function MainCode({ session, supabase, appBackendHost, appBackendPort }) {
 
   const enterBoatFindMode = (boatListing) => {
     setBoatFindMode(true);
-    setHighlightedBoatId(boatListing.boat_on_map_id);
+    setHighlightedBoatId(boatListing.map_position_id);
 
-    const boat = boatsOnMap.find(boat => boat.boat_on_map_id === boatListing.boat_on_map_id);
+    const boat = boatsOnMap.find(boat => boat.id === boatListing.map_position_id);
     if (boat) {
       const mapElement = document.querySelector('.map-canvas');
       if (mapElement) {
@@ -414,7 +414,9 @@ function MainCode({ session, supabase, appBackendHost, appBackendPort }) {
       message: `Assign this map selection to Boat Listing '${boatListing.name || 'Untitled'}'?`,
       onYes: async () => {
         const sessionCookie = Cookies.get('supabase-session');
-        const updatedBoatListing = { ...boatListing, boat_on_map_id: activeBoatOnMapId };
+        // Find the actual database ID for this boat_on_map_id
+        const mapPosition = boatsOnMap.find(b => b.boat_on_map_id === activeBoatOnMapId);
+        const updatedBoatListing = { ...boatListing, map_position_id: mapPosition?.id };
   
         try {
           const response = await fetch(`${boatListingsURL}/${boatListing.boat_listing_id}`, {
@@ -454,13 +456,15 @@ function MainCode({ session, supabase, appBackendHost, appBackendPort }) {
   const filteredBoatsOnMap = unassignedOnlyMode
     ? boatsOnMap.filter((boatOnMap) =>
         !boatListings.some(
-          (boatListing) => boatListing.boat_on_map_id === boatOnMap.boat_on_map_id
+          !boatListings.some(
+            (boatListing) => boatListing.map_position_id === boatOnMap.id
+          )
         )
       )
     : boatsOnMap;
 
   const filteredBoatListingsForDisplay = (unassignedOnlyMode
-    ? filteredBoatListings.filter((boatListing) => boatListing.boat_on_map_id === null)
+    ? filteredBoatListings.filter((boatListing) => boatListing.map_position_id === null)
     : filteredBoatListings
   ).slice(
     (currentPage - 1) * boatListingsPerPage,
@@ -512,7 +516,7 @@ function MainCode({ session, supabase, appBackendHost, appBackendPort }) {
         <button onClick={() => supabase.auth.signOut()}>Sign Out</button>
         <div className="version-controls">
           <span>
-            Now on version: {currentVersion ? new Date(currentVersion.created_at).toLocaleString() : 'Loading...'}
+            Now on version: {currentVersion ? new Date(currentVersion.saved_at).toLocaleString() : 'Loading...'}
           </span>
           <button onClick={handleSaveVersion}>Save Version</button>
           <button onClick={() => setShowVersionHistory(true)}>Version History</button>

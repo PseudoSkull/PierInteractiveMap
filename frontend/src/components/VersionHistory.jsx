@@ -76,7 +76,7 @@ function VersionHistory({ backendURLPrefix, onClose, onViewVersion }) {
 
   const confirmRestore = (version) => {
     setShowConfirmation({
-      message: `Are you sure you want to restore to version from ${new Date(version.created_at).toLocaleString()}?`,
+      message: `Are you sure you want to restore to version from ${new Date(version.saved_at).toLocaleString()}?`,
       onYes: () => handleRestore(version.version_id),
       onNo: () => setShowConfirmation(null),
     });
@@ -165,7 +165,7 @@ function VersionHistory({ backendURLPrefix, onClose, onViewVersion }) {
           {versions.map((version) => (
             <div key={version.version_id} className="version-item">
               <div className="version-info">
-                <strong>Version {new Date(version.created_at).toLocaleString()}</strong>
+                <strong>Version {new Date(version.saved_at).toLocaleString()}</strong>
                 {version.is_current && <span className="current-badge"> (Current)</span>}
                 {editingNoteId === version.version_id ? (
                   <div className="note-editor">

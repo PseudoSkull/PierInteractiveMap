@@ -5,7 +5,7 @@ import React from 'react';
 function BoatList({ boatListings, onEdit, onDelete, boatsOnMap, setBoatsOnMap, activeBoatOnMapId, assignBoatListingToMap, onViewBoat, unassignedOnlyMode }) {
 
   const filteredBoatListings = unassignedOnlyMode
-  ? boatListings.filter(boatListing => !boatListing.boat_on_map_id)
+  ? boatListings.filter(boatListing => !boatListing.map_position_id)
   : boatListings;
   
   if (!boatListings || boatListings.length === 0) {
@@ -37,7 +37,7 @@ function BoatList({ boatListings, onEdit, onDelete, boatsOnMap, setBoatsOnMap, a
           <div style={{ flex: '1 1 30%', textAlign: 'right' }}>
             <button onClick={() => onEdit(boatListing)} style={{ marginRight: '10px' }}>Info</button>
             <button onClick={() => onDelete(boatListing.boat_listing_id)}>Delete</button>
-            {boatListing.boat_on_map_id ? (
+            {boatListing.map_position_id ? (
               <button onClick={() => onViewBoat(boatListing)}>View Boat on Map</button>
             ) : (
               <button onClick={() => assignBoatListingToMap(boatListing)}>Unassigned</button>
