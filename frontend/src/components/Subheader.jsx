@@ -15,11 +15,9 @@ function Subheader({
         if (!selectedBoatOnMap) {
           return 'No boat selected';
         }
-        console.log(`Current selected boat on map in Subheader: ${selectedBoatOnMap.boat_on_map_id}`)
-        // Find the assigned boat listing for the selected boat on map
+        
         const assignedBoat = boatListings.find(
-          (boatListing) =>
-            boatListing.boat_on_map_id === selectedBoatOnMap.boat_on_map_id
+          (boatListing) => boatListing.map_position_id === selectedBoatOnMap.id
         );
       
         if (assignedBoat) {
@@ -29,10 +27,6 @@ function Subheader({
               <button onClick={() => onShowAssociatedBoat(assignedBoat)}>Show Associated Boat</button>
             </>
           );
-        }
-      
-        if (selectedBoatOnMap.boat_on_map_id === null || selectedBoatOnMap.boat_on_map_id === undefined) {
-          return `This boat (ID: ${selectedBoatOnMap.boat_on_map_id || 'unknown'}) is currently unassigned.`;
         }
       
         return `This boat (ID: ${selectedBoatOnMap.boat_on_map_id}) is currently unassigned.`;

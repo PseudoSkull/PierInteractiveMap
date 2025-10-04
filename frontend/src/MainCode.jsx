@@ -36,7 +36,6 @@ function MainCode({ session, supabase, appBackendHost, appBackendPort }) {
   const [unassignedOnlyMode, setAssignedOnlyMode] = useState(false);
   const [selectedBoatOnMap, setSelectedBoatOnMap] = useState(null);
 
-  // Version history state
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [viewingVersionId, setViewingVersionId] = useState(null);
   const [currentVersion, setCurrentVersion] = useState(null);
@@ -48,12 +47,11 @@ function MainCode({ session, supabase, appBackendHost, appBackendPort }) {
     fetchBoatsOnMap();
     fetchCurrentVersion();
     
-    // Auto-save every 10 minutes if there are changes
     const autoSaveInterval = setInterval(() => {
       if (hasUnsavedChanges) {
         handleSaveVersion();
       }
-    }, 10 * 60 * 1000); // 10 minutes
+    }, 10 * 60 * 1000);
 
     return () => clearInterval(autoSaveInterval);
   }, []);
@@ -96,6 +94,8 @@ function MainCode({ session, supabase, appBackendHost, appBackendPort }) {
       if (response.ok) {
         setHasUnsavedChanges(false);
         fetchCurrentVersion();
+        fetchAllBoatListings();
+        fetchBoatsOnMap();
         alert('Version saved successfully!');
       }
     } catch (error) {
@@ -320,10 +320,11 @@ function MainCode({ session, supabase, appBackendHost, appBackendPort }) {
 
   const enterBoatFindMode = (boatListing) => {
     setBoatFindMode(true);
-    setHighlightedBoatId(boatListing.map_position_id);
-
     const boat = boatsOnMap.find(boat => boat.id === boatListing.map_position_id);
+    
     if (boat) {
+      setHighlightedBoatId(boat.boat_on_map_id);
+      
       const mapElement = document.querySelector('.map-canvas');
       if (mapElement) {
         const mapRect = mapElement.getBoundingClientRect();
@@ -414,7 +415,6 @@ function MainCode({ session, supabase, appBackendHost, appBackendPort }) {
       message: `Assign this map selection to Boat Listing '${boatListing.name || 'Untitled'}'?`,
       onYes: async () => {
         const sessionCookie = Cookies.get('supabase-session');
-        // Find the actual database ID for this boat_on_map_id
         const mapPosition = boatsOnMap.find(b => b.boat_on_map_id === activeBoatOnMapId);
         const updatedBoatListing = { ...boatListing, map_position_id: mapPosition?.id };
   
@@ -456,9 +456,7 @@ function MainCode({ session, supabase, appBackendHost, appBackendPort }) {
   const filteredBoatsOnMap = unassignedOnlyMode
     ? boatsOnMap.filter((boatOnMap) =>
         !boatListings.some(
-          !boatListings.some(
-            (boatListing) => boatListing.map_position_id === boatOnMap.id
-          )
+          (boatListing) => boatListing.map_position_id === boatOnMap.id
         )
       )
     : boatsOnMap;
@@ -486,7 +484,6 @@ function MainCode({ session, supabase, appBackendHost, appBackendPort }) {
     setShowVersionHistory(true);
   };
 
-  // If viewing a historical version
   if (viewingVersionId) {
     return (
       <VersionViewer
@@ -497,7 +494,6 @@ function MainCode({ session, supabase, appBackendHost, appBackendPort }) {
     );
   }
 
-  // If showing version history
   if (showVersionHistory) {
     return (
       <VersionHistory
@@ -508,7 +504,6 @@ function MainCode({ session, supabase, appBackendHost, appBackendPort }) {
     );
   }
 
-  // Main view
   return (
     <div className="app">
       <div className="top-bar">
